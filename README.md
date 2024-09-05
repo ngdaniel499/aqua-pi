@@ -24,32 +24,34 @@ OS Customisation settings:
 	General>Set Locale settings>Keyboard Layout: US
 
 ### RPi setup
-sudo apt-get update
+	sudo apt-get update
 
-sudo apt-get upgrade
+	sudo apt-get upgrade
+
 ####Turn on 1-wire
+
 https://learn.adafruit.com/adafruits-raspberry-pi-lesson-11-ds18b20-temperature-sensing/ds18b20
 
-sudo raspi-config
+	sudo raspi-config
 
-Interfacing Options > 1-Wire > Yes
+		Interfacing Options > 1-Wire > Yes
 
-sudo reboot
+	sudo reboot
 
 
-sudo modprobe w1-gpio #add to /etc/rc.local (to apply at every boot)
+	sudo modprobe w1-gpio #add to /etc/rc.local (to apply at every boot)
 
-sudo modprobe w1-therm #add to /etc/rc.local (to apply at every boot)
+	sudo modprobe w1-therm #add to /etc/rc.local (to apply at every boot)
 
 #### Install python and setup virtual environment
 
-sudo apt-get install python3 python3-pip
+	sudo apt-get install python3 python3-pip
 
-python3 -m venv venv-aquapi
+	python3 -m venv venv-aquapi
 
-source venv-aquapi/bin/activate
+	source venv-aquapi/bin/activate
 
-cd aqua-pi
+	cd aqua-pi
 
-pip install -r requirements.txt
+	pip install -r requirements.txt
 
