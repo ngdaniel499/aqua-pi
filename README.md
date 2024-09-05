@@ -28,9 +28,9 @@ OS Customisation settings:
 
 	sudo apt-get upgrade
 
-####Turn on 1-wire
+#### Turn on 1-wire
 
-https://learn.adafruit.com/adafruits-raspberry-pi-lesson-11-ds18b20-temperature-sensing/ds18b20
+Refernce: https://learn.adafruit.com/adafruits-raspberry-pi-lesson-11-ds18b20-temperature-sensing/ds18b20
 
 	sudo raspi-config
 
