@@ -1,0 +1,159 @@
+#!/usr/bin/python
+#----------------------------------------------------------------------------------------------#
+# NAME:         AquaPi.py
+# CREATED:      August 10 2014
+# CREATED BY:   Daniel P Harrison, University of Sydney 
+# 	        	Some intital code adapted from Bjorn Veltman & Adafruit
+# Modification 1 By: Shariq Riaz, University of Sydney
+#                       ADC read script is changed and pin numbers
+# FUNCTION:     Operates the AquaPi Sensor Suite created by Daniel P Harrison as part of the Sydney
+#               Harbour Research Program - Real Time Monitoring
+#
+# run this script as: sudo python AquaPi.py config.cfg
+# parameters values are given in Upconfig.cfg
+#----------------------------------------------------------------------------------------------
+import os
+import glob
+import time
+import datetime
+import ConfigParser
+import sys
+import serial
+#from ftplib import FTP
+import traceback
+#from ftpupallAuto import ftpupload
+import spidev
+import wiringpi2 as wiringpi
+import RPi.GPIO as GPIO
+from decimal import*
+import signal
+
+from SNSR import readadc,readchl,readcdom,readturb,readcond
+
+wiringpi.wiringPiSetupGpio()
+
+"""THREEPLACES = Decimal(10) ** -3
+THREEPLACES=10**-3
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BCM)
+
+SPICLK=11
+SPIMISO=9
+SPIMOSI=10
+SPICS=8
+SENSOR1=22
+SENSOR2=27
+RELAY=17
+
+GPIO.setup(SPIMOSI,GPIO.OUT)
+GPIO.setup(SPIMISO,GPIO.IN)
+GPIO.setup(SPICLK, GPIO.OUT)
+GPIO.setup(SPICS,  GPIO.OUT)
+GPIO.setup(SENSOR1,  GPIO.OUT)
+GPIO.setup(SENSOR2,  GPIO.OUT)
+GPIO.setup(RELAY,  GPIO.OUT)
+"""
+
+        
+def open_outputfile(fpath, stationid):
+    outfile = stationid + '_' + time.strftime("%Y_%m_%d_%H")+'H.csv'
+    fpathf = os.path.join(fpath,outfile)
+    if os.path.exists(fpathf):
+        f = open(fpathf,'a')
+    else:
+        f = open(fpathf,'w')
+        headerline = 'Time,Tempraw,TempCal,Condraw,CondCal,Turbraw,TurbCal,TurbManu,ChlRaw,ChlVolts,ChlCal,CDOMRaw,CDOMVolts,CDOMCal'
+        f.write(str(headerline))
+        f.write('\n')
+    return f, outfile, fpathf
+
+# Start Main Program Here
+try:
+    config = ConfigParser.ConfigParser()
+    configfilewithpath =  '/home/pi/PythonScripts/FINAL_CODE/Upconfig.cfg'
+    config.read(configfilewithpath)
+    config_file = configfilewithpath.split('\\')[-1]
+    base_dir = config.get('Section1', 'base_dir')
+    slave_dir = config.get('Section1', 'slave_dir')
+    fpath = config.get('Section1', 'fpath')
+    stationid = config.get('Section1', 'stationid')
+    readinterval = config.getfloat('Section1', 'readinterval')
+    cdompin = config.getint('Section1', 'cdompin')
+    chlpin = config.getint('Section1', 'chlpin')    
+    pumppin = config.getint('Section1', 'pumppin')
+    pumpflush = config.getint('Section1', 'pumpflush')
+    server_ip = config.get('Section1', 'server_ip')
+    username = config.get('Section1', 'username')
+    password = config.get('Section1', 'password')
+    ftp_dir = config.get('Section1', 'ftp_dir')
+    #Get calibration constants
+    chlslope = config.getfloat('Section1', 'chlslope')
+    chlint = config.getfloat('Section1', 'chlint')
+    cdomslope = config.getfloat('Section1', 'cdomslope')
+    cdomint = config.getfloat('Section1', 'cdomint')
+    turbslope = config.getfloat('Section1', 'turbslope')
+    turbint = config.getfloat('Section1', 'turbint')
+    condslope = config.getfloat('Section1', 'condslope')
+    condint = config.getfloat('Section1', 'condint')
+    tempslope = config.getfloat('Section1', 'tempslope')
+    tempint = config.getfloat('Section1', 'tempint')    
+    #create output file
+    f, outfile, fpathf = open_outputfile(fpath, stationid)
+    #create variable for current file hour 
+    now = datetime.datetime.now()
+    checkhour = now.hour
+    
+    for x in range (0,1):
+    #    for x in range(0, 10):
+
+        # Flush flow chamber
+        wiringpi.wiringPiSetupGpio()
+        wiringpi.pinMode(pumppin, 1)
+        wiringpi.digitalWrite(pumppin, 1)
+        time.sleep(pumpflush*60)
+
+        # Conduct Measurements
+
+        # Temperature / conductivity
+        TempRaw, CondRaw, TempCal, CondCal = readcond('USB0',condslope, condint, tempslope, tempint)
+
+	# Turbidity
+        TurbRaw, TurbCal, TurbManu = readturb('USB1', turbslope, turbint)
+	
+        #Chl
+        ChlRaw, ChlVolts, ChlCal = readchl(chlpin, chlslope, chlint)
+        
+        #CDOM
+        CDOMRaw, CDOMVolts, CDOMCal = readcdom(cdompin, cdomslope, cdomint)
+
+        # Stop Pump
+        wiringpi.digitalWrite(pumppin, 0)
+        #time.sleep(5)
+        # For testing print results to screen
+        print('Tempraw',TempRaw)
+        print('Condraw',CondRaw)
+        print('TempCal',TempCal)
+        print('CondCal',CondCal)
+        print('Turbraw',TurbRaw)
+        print('Turbcal',TurbCal)
+        print('ChlRaw)',ChlRaw)
+        print('ChlVolts',ChlVolts)
+        print('ChlCal',ChlCal)
+        print('CDOMRaw',CDOMRaw)
+        print('CDOMVolts',CDOMVolts)
+        print('CDOMCal',CDOMCal)
+	sys.stdout.flush()
+
+        # Write results to file
+        r = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s' % (time.strftime("%d-%m-%Y %H:%M:%S"), TempRaw, TempCal, CondRaw, CondCal, TurbRaw, TurbCal, TurbManu, ChlRaw, ChlVolts, ChlCal, CDOMRaw, CDOMVolts, CDOMCal)
+        f.write(str(r))
+        f.write('\n')
+	f.close
+
+except:
+    tb = sys.exc_info()[2]
+    tbinfo = traceback.format_tb(tb)[0]
+    error_msg = tbinfo + " " + str(sys.exc_info()[1])
+    print error_msg
+    f.write(error_msg)
+    f.close()
