@@ -3,7 +3,7 @@
 # NAME:         AquaPi.py
 # CREATED:      August 10 2014
 # CREATED BY:   Daniel P Harrison, University of Sydney 
-# 	        	Some intital code adapted from Bjorn Veltman & Adafruit
+#               Some intital code adapted from Bjorn Veltman & Adafruit
 # Modification 1 By: Shariq Riaz, University of Sydney
 #                       ADC read script is changed and pin numbers
 # Modification 2 By: Daniel Harrison, conductivity cal changed to polynomial
@@ -18,31 +18,28 @@ import os
 import glob
 import time
 import datetime
-import ConfigParser
+import configparser as ConfigParser
 import sys
 import serial
-#from ftplib import FTP
 import traceback
-#from ftpupallAuto import ftpupload
 import spidev
 import wiringpi2 as wiringpi
 import RPi.GPIO as GPIO
 from decimal import*
 import signal
 
-from SNSR import readadc,readchl,readtemp,readcdom,readturb,readcond
+from SNSR import readadc, readchl, readtemp, readcdom, readturb, readcond
 
 wiringpi.wiringPiSetupGpio()
 
-        
 def open_outputfile(fpath, stationid):
     outfile = stationid + '_' + time.strftime("%Y_%m_%d_%H")+'H.csv'
-    fpathf = os.path.join(fpath,outfile)
+    fpathf = os.path.join(fpath, outfile)
     if os.path.exists(fpathf):
-        f = open(fpathf,'a')
+        f = open(fpathf, 'a')
     else:
-        f = open(fpathf,'w')
-        headerline = 'Time,Probe_TempRaw,Probe_TempCal,Condraw,CondCal,SpCond,Salinity,TurbRaw,TurbCal,TurbManu,ChlRaw,ChlVolts,ChlCal,CDOMRaw,CDOMVolts,CDOMCal,CDOMChlEQ, ChlAdj, TempRaw, TempCal'
+        f = open(fpathf, 'w')
+        headerline = 'Time,Probe_TempRaw,Probe_TempCal,Condraw,CondCal,SpCond,Salinity,TurbRaw,TurbCal,TurbManu,ChlRaw,ChlVolts,ChlCal,CDOMRaw,CDOMVolts,CDOMCal,CDOMChlEQ,ChlAdj,TempRaw,TempCal'
         f.write(str(headerline))
         f.write('\n')
     return f, outfile, fpathf
@@ -50,7 +47,9 @@ def open_outputfile(fpath, stationid):
 # Start Main Program Here
 try:
     config = ConfigParser.ConfigParser()
-    configfilewithpath =  '/home/pi/PythonScripts/FINAL_CODE/Upconfig.cfg'
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    config_file = 'Upconfig.cfg'
+    configfilewithpath = os.path.join(current_dir, config_file)
     config.read(configfilewithpath)
     config_file = configfilewithpath.split('\\')[-1]
     base_dir = config.get('Section1', 'base_dir')
@@ -96,8 +95,7 @@ try:
     now = datetime.datetime.now()
     checkhour = now.hour
     
-    for x in range (0,1):
-
+    for x in range(0, 1):
         # Flush flow chamber
         wiringpi.wiringPiSetupGpio()
         wiringpi.pinMode(pumppin, 1)
@@ -107,58 +105,57 @@ try:
         # Conduct Measurements
 
         # Temperature / conductivity
-        Probe_TempRaw, CondRaw, Probe_TempCal, CondCal, SpCond, Salinity = readcond(condpin,'USB0',conda,condb,condc, condd, Probe_tempslope, Probe_tempint)
+        Probe_TempRaw, CondRaw, Probe_TempCal, CondCal, SpCond, Salinity = readcond(condpin, 'USB0', conda, condb, condc, condd, Probe_tempslope, Probe_tempint)
 
-	# Turbidity
+        # Turbidity
         TurbRaw, TurbCal, TurbManu = readturb('USB1', turbslope, turbint)
-	
-        #Chl
-        ChlRaw, ChlVolts, ChlCal = readchl(chlpin, chladc,chlslope, chlint)
+    
+        # Chl
+        ChlRaw, ChlVolts, ChlCal = readchl(chlpin, chladc, chlslope, chlint)
 
         time.sleep(0.5)
         
-        #CDOM
-        CDOMRaw, CDOMVolts, CDOMCal, CDOMChlEQ = readcdom(cdompin, cdomadc,cdomslope, cdomint, cdomchlslope, cdomchlint)
+        # CDOM
+        CDOMRaw, CDOMVolts, CDOMCal, CDOMChlEQ = readcdom(cdompin, cdomadc, cdomslope, cdomint, cdomchlslope, cdomchlint)
         ChlAdj = ChlCal - CDOMChlEQ
 
-        #Temp
+        # Temp
         TempRaw, TempVolts, TempCal = readtemp(temppin, tempadc, tempslope, tempint)
         
         # Stop Pump
         wiringpi.digitalWrite(pumppin, 0)
         #time.sleep(5)
         # For testing print results to screen
-        print('Probe_Tempraw',Probe_TempRaw)
-        print('Condraw',CondRaw)
-        print('Probe_TempCal',Probe_TempCal)
-        print('CondCal',CondCal)
-        print('SpCond',SpCond)
-        print('Salinity',Salinity)
-        print('Turbraw',TurbRaw)
-        print('Turbcal',TurbCal)
-        print('ChlRaw)',ChlRaw)
-        print('ChlVolts',ChlVolts)
-        print('ChlCal',ChlCal)
-        print('CDOMRaw',CDOMRaw)
-        print('CDOMVolts',CDOMVolts)
-        print('CDOMCal',CDOMCal)
-        print('CDOM Chl EQ',CDOMChlEQ)
-        print('Chl Adjusted',ChlAdj)
-        print('Tempraw',TempRaw)
-        print('TempCal',TempCal)
-	sys.stdout.flush()
+        print('Probe_Tempraw', Probe_TempRaw)
+        print('Condraw', CondRaw)
+        print('Probe_TempCal', Probe_TempCal)
+        print('CondCal', CondCal)
+        print('SpCond', SpCond)
+        print('Salinity', Salinity)
+        print('Turbraw', TurbRaw)
+        print('Turbcal', TurbCal)
+        print('ChlRaw)', ChlRaw)
+        print('ChlVolts', ChlVolts)
+        print('ChlCal', ChlCal)
+        print('CDOMRaw', CDOMRaw)
+        print('CDOMVolts', CDOMVolts)
+        print('CDOMCal', CDOMCal)
+        print('CDOM Chl EQ', CDOMChlEQ)
+        print('Chl Adjusted', ChlAdj)
+        print('Tempraw', TempRaw)
+        print('TempCal', TempCal)
+        sys.stdout.flush()
 
         # Write results to file
         r = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s' % (time.strftime("%d-%m-%Y %H:%M:%S"), Probe_TempRaw, Probe_TempCal, CondRaw, CondCal, SpCond, Salinity, TurbRaw, TurbCal, TurbManu, ChlRaw, ChlVolts, ChlCal, CDOMRaw, CDOMVolts, CDOMCal, CDOMChlEQ, ChlAdj, TempRaw, TempCal)
         f.write(str(r))
         f.write('\n')
-	f.close
+        f.close()
 
 except:
     tb = sys.exc_info()[2]
     tbinfo = traceback.format_tb(tb)[0]
     error_msg = tbinfo + " " + str(sys.exc_info()[1])
-    print error_msg
+    print(error_msg)
     f.write(error_msg)
     f.close()
-

@@ -1,0 +1,9 @@
+configparser==7.1.0
+future==1.0.0
+iso8601==2.1.0
+PyYAML==6.0.2
+RPi.GPIO==0.7.1
+serial==0.0.97
+spidev==3.6
+wiringpi==2.60.1
+wiringpi2==2.32.3

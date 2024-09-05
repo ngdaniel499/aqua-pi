@@ -77,23 +77,23 @@ def readchl(chlpin, chladc,chlslope, chlint):
         ADC_Chl=chladc
         resp=readadc(ADC_Chl,SPICLK,SPIMOSI,SPIMISO,SPICS)
         # Format response from ADC chip
-	ChlRaw = resp
+        ChlRaw = resp
         ChlVolts = (float(ChlRaw) / 4096) * 3.3
         ChlCal = (ChlRaw * chlslope) + chlint 
-        print "ChlRaw is:", ChlRaw
-        print"ChlVolts is:", ChlVolts
-        print "ChlCal is:", ChlCal
+        print("ChlRaw is:", ChlRaw)
+        print("ChlVolts is:", ChlVolts)
+        print("ChlCal is:", ChlCal)
         #turn off probe
         wiringpi.digitalWrite(chlpin, 1)
         return ChlRaw, ChlVolts, ChlCal
     except:
-        print 'Read Chl Fail'
+        print('Read Chl Fail')
         ChlRaw = 'Fail'
         ChlVolts = 'Fail'
         ChlCal = 'Fail'
         wiringpi.digitalWrite(chlpin, 1)
         return ChlRaw, ChlVolts, ChlCal
-	
+    
 def readcdom(cdompin, cdomadc,cdomslope, cdomint, cdomchlslope, cdomchlint):
     try:
         #Turn on CDOM probe using relay 
@@ -109,10 +109,10 @@ def readcdom(cdompin, cdomadc,cdomslope, cdomint, cdomchlslope, cdomchlint):
         CDOMVolts = (float(CDOMRaw) / 4096) * 3.3
         CDOMCal = (CDOMRaw * cdomslope) + cdomint
         CDOMChlEQ = (CDOMRaw * cdomchlslope) + cdomchlint
-        print "CDOMRaw is:", CDOMRaw
-        print"CDOMVolts is:", CDOMVolts
-        print "CDOMCal is:", CDOMCal
-        print "CDOM Chl EQ is:", CDOMChlEQ
+        print("CDOMRaw is:", CDOMRaw)
+        print("CDOMVolts is:", CDOMVolts)
+        print("CDOMCal is:", CDOMCal)
+        print("CDOM Chl EQ is:", CDOMChlEQ)
         #turn off probe
         wiringpi.digitalWrite(cdompin, 1)
         return CDOMRaw, CDOMVolts, CDOMCal, CDOMChlEQ
@@ -137,27 +137,27 @@ def readtemp(temppin, tempadc,tempslope, tempint):
         ADC_Chl=tempadc
         resp=readadc(ADC_Chl,SPICLK,SPIMOSI,SPIMISO,SPICS)
         # Format response from ADC chip
-	TempRaw = resp
+        TempRaw = resp
         TempVolts = (float(TempRaw) / 4096) * 3.3
         TempCal = (TempRaw * tempslope) + tempint 
-        print "TempRaw is:", TempRaw
-        print"TempVolts is:", TempVolts
-        print "TempCal is:", TempCal
+        print("TempRaw is:", TempRaw)
+        print("TempVolts is:", TempVolts)
+        print( "TempCal is:", TempCal)
         #turn off probe
         wiringpi.digitalWrite(temppin, 0)
         return TempRaw, TempVolts, TempCal
     except:
-        print 'Read Temp Fail'
+        print( 'Read Temp Fail')
         TempRaw = 'Fail'
         TempVolts = 'Fail'
         TempCal = 'Fail'
         wiringpi.digitalWrite(temppin, 0)
         return TempRaw, TempVolts, TempCal
-	
+    
 def readturb(turbID, turbslope, turbint):
     try:
 #    for x in range(0,1):
-    #Set up serial comms. Sensor connected by Prolific USB to Serial Converter 	
+    #Set up serial comms. Sensor connected by Prolific USB to Serial Converter     
         port = serial.Serial("/dev/ttyUSB1", baudrate=1200, bytesize=7, parity='E', stopbits=1, xonxoff=0, rtscts=0, timeout=5)
         #Clear buffers
         port.flushInput()
@@ -185,12 +185,12 @@ def readturb(turbID, turbslope, turbint):
         TurbManu = respvalues[0]
         TurbRaw = respvalues[1]
         TurbCal = (TurbRaw*turbslope)+turbint
-        print "TurbManu value is:", TurbManu
-        print "TurbCal value is:", TurbCal
-        print "TurbRaw is:", TurbRaw
+        print( "TurbManu value is:", TurbManu)
+        print( "TurbCal value is:", TurbCal)
+        print( "TurbRaw is:", TurbRaw)
         return TurbRaw, TurbCal, TurbManu
     except:
-        print 'ReadTurbFail'
+        print( 'ReadTurbFail')
         TurbRaw = 'Fail'
         TurbCal = 'Fail'
         TurbManu = 'Fail'
@@ -200,42 +200,42 @@ def readcond(condpin, condID, conda, condb, condc, condd, tempslope, tempint):
         wiringpi.pinMode(condpin, 1)
         wiringpi.digitalWrite(condpin, 0)
         time.sleep(5)
-    	#Set up serial comms. Sensor connected by Prolific USB to Serial Conveter 
-    	port = serial.Serial("/dev/ttyUSB0", baudrate=4800, bytesize=8, parity='N', stopbits=1, xonxoff=0, rtscts=0, timeout=10)
-    	
-    	# wake up odyssey sensor
-    	response = "No"
-	trycount = 0
-    	while response != "Hi!":
-    		port.flushInput()
-    		port.flushOutput()
-    		port.write(chr(0x01))
-    		response=port.read(3)
-    		print(response)
-		if trycount == 3 :
-			break
-		trycount = trycount + 1
-    	
-    	#Start trace mode by sending "T" followed by sensor ID
-    	time.sleep(1)
-    	port.flushOutput()
-    	port.flushInput()
-    	port.write(chr(0x54))
-    	port.write(chr(0x1a))   
+        #Set up serial comms. Sensor connected by Prolific USB to Serial Conveter 
+        port = serial.Serial("/dev/ttyUSB0", baudrate=4800, bytesize=8, parity='N', stopbits=1, xonxoff=0, rtscts=0, timeout=10)
+        
+        # wake up odyssey sensor
+        response = "No"
+        trycount = 0
+        while response != "Hi!":
+            port.flushInput()
+            port.flushOutput()
+            port.write(chr(0x01))
+            response=port.read(3)
+            print(response)
+            if trycount == 3 :
+                break
+            trycount = trycount + 1
+        
+        #Start trace mode by sending "T" followed by sensor ID
+        time.sleep(1)
+        port.flushOutput()
+        port.flushInput()
+        port.write(chr(0x54))
+        port.write(chr(0x1a))   
 
-    	#Read data, data delivered in stream of 4 bytes representing 2 lots of 0-65535 values for temperature / salinity
-    	data=port.read(4)
-    	
-    	#Test Code used to check calculations
-    	#data1 =chr(int("0x09",16))
-    	#data2 =chr(int("13",16))
+        #Read data, data delivered in stream of 4 bytes representing 2 lots of 0-65535 values for temperature / salinity
+        data=port.read(4)
+        
+        #Test Code used to check calculations
+        #data1 =chr(int("0x09",16))
+        #data2 =chr(int("13",16))
     
-    	#Calculate Temp & Conductivity
-    	TempRaw = ord(data[0])+ord(data[1])*256
-    	CondRaw = ord(data[2])+ord(data[3])*256
+        #Calculate Temp & Conductivity
+        TempRaw = ord(data[0])+ord(data[1])*256
+        CondRaw = ord(data[2])+ord(data[3])*256
         # Perform Calibrations
         TempCal = (TempRaw*tempslope) + tempint
-        CondCal = (CondRaw**3)*conda + (CondRaw**2)*condb + CondRaw*condc + condd	
+        CondCal = (CondRaw**3)*conda + (CondRaw**2)*condb + CondRaw*condc + condd    
         #Calculate SpCond and Salinity
         SpCond = CondCal/(1+0.0191*(TempCal-25))
         R = SpCond/53087
@@ -246,23 +246,23 @@ def readcond(condpin, condID, conda, condb, condc, condd, tempslope, tempint):
         k5 = -6.4778
         k6 = 2.5842
         Salinity = k1 +(k2*R**(1/2))+(k3*R)+(k4*R**(3/2))+(k5*R**2)+(k6*R**(5/2))
-    	#End trace mode
-    	response = "No"
-    	while response !="Hi!":
-    		port.flushInput()
-    		port.flushOutput()
-    		for count in range(0, 256):
-    			port.write(chr(0x01))
-    		response=port.read(3)
-    	wiringpi.digitalWrite(condpin, 1)	
-    	return TempRaw, CondRaw, TempCal, CondCal, SpCond, Salinity
+        #End trace mode
+        response = "No"
+        while response !="Hi!":
+            port.flushInput()
+            port.flushOutput()
+            for count in range(0, 256):
+                port.write(chr(0x01))
+            response=port.read(3)
+        wiringpi.digitalWrite(condpin, 1)    
+        return TempRaw, CondRaw, TempCal, CondCal, SpCond, Salinity
     except:
         #print 'Read Temp/Cond Fail'
         TempRaw = 'Fail'
-	CondRaw = 'Fail'
-	TempCal = 'Fail'
-	CondCal = 'Fail'
-	SpCond = 'Fail'
-	Salinity = 'Fail'
-	wiringpi.digitalWrite(condpin, 1)
+        CondRaw = 'Fail'
+        TempCal = 'Fail'
+        CondCal = 'Fail'
+        SpCond = 'Fail'
+        Salinity = 'Fail'
+        wiringpi.digitalWrite(condpin, 1)
         return TempRaw, CondRaw, TempCal, CondCal, SpCond, Salinity
