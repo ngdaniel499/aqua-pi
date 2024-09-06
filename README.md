@@ -54,4 +54,6 @@ Refernce: https://learn.adafruit.com/adafruits-raspberry-pi-lesson-11-ds18b20-te
 	cd aqua-pi
 
 	pip install -r requirements.txt
-
+#### Setup Crontab with debugging log
+	crontab -e
+ 	*/15 * * * * (date && echo "Starting job" && cd ~/ && echo "Changed directory" && . venv-aquapi/bin/activate && echo "Activated venv" && python aqua-pi/python-scripts/main.py && echo "Ran Python script") >> /tmp/cronrun.log 2>&1
