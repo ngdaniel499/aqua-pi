@@ -10,7 +10,18 @@ Download Raspberry pi imager https://www.raspberrypi.com/software/
 Raspberry Pi Device: Raspberry Pi 1
 
 Operating System: Raspberry PI OS Lite (32-BIT)
+	
+ 	PRETTY_NAME="Raspbian GNU/Linux 12 (bookworm)"
+	NAME="Raspbian GNU/Linux"
+	VERSION_ID="12"
 	VERSION="12 (bookworm)"
+	VERSION_CODENAME=bookworm
+	ID=raspbian
+	ID_LIKE=debian
+	HOME_URL="http://www.raspbian.org/"
+	SUPPORT_URL="http://www.raspbian.org/RaspbianForums"
+	BUG_REPORT_URL="http://www.raspbian.org/RaspbianBugs"
+	 
 OS Customisation settings: 
 
 	Services>Enable SSH, 
