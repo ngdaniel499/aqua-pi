@@ -10,7 +10,7 @@ Download Raspberry pi imager https://www.raspberrypi.com/software/
 Raspberry Pi Device: Raspberry Pi 1
 
 Operating System: Raspberry PI OS Lite (32-BIT)
-
+	VERSION="12 (bookworm)"
 OS Customisation settings: 
 
 	Services>Enable SSH, 
