@@ -1,3 +1,0 @@
-Time,Probe_TempRaw,Probe_TempCal,Condraw,CondCal,SpCond,Salinity,TurbRaw,TurbCal,TurbManu,ChlRaw,ChlVolts,ChlCal,CDOMRaw,CDOMVolts,CDOMCal,CDOMChlEQ,ChlAdj,TempRaw,TempCal
-05-09-2024 14:39:08,Fail,Fail,Fail,Fail,Fail,Fail,Fail,Fail,Fail,133,0.1071533203125,0.3605,0,0.0,0.0,0.0,0.3605,395,396.0
-05-09-2024 14:41:52,Fail,Fail,Fail,Fail,Fail,Fail,Fail,Fail,Fail,152,0.12246093749999999,0.46880000000000005,0,0.0,0.0,0.0,0.46880000000000005,395,396.0
