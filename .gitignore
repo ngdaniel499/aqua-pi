@@ -1,2 +1,5 @@
 python-scripts/data/*
 **/__pycache__/
+python-scripts/upload.log
+python-scripts/uploadDataHTTPS.py
+python-scripts/uploaded_files.txt
