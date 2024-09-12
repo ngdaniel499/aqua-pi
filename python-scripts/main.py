@@ -13,6 +13,9 @@
 #                       Relay operation corrected, CAMPBELL temperature sensor interfaced
 # run this script as: sudo python AquaPi.py config.cfg
 # parameters values are given in Upconfig.cfg
+# Modification 4 By: Daniel Ng, WhaleX
+#                       Updated to python3, version control moved to github
+#                       https://github.com/ngdaniel499/aqua-pi
 #----------------------------------------------------------------------------------------------
 import os
 import glob
@@ -54,7 +57,7 @@ try:
     config_file = configfilewithpath.split('\\')[-1]
     base_dir = config.get('Section1', 'base_dir')
     slave_dir = config.get('Section1', 'slave_dir')
-    fpath = os.path.join(current_dir, "data")  #changed from fixed directory to relative directory
+    fpath = config.get('Section1', 'data')
     stationid = config.get('Section1', 'stationid')
     readinterval = config.getfloat('Section1', 'readinterval')
     cdompin = config.getint('Section1', 'cdompin')
