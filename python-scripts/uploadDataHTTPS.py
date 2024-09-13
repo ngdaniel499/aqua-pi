@@ -10,6 +10,14 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
+# Function to log and print messages
+def log_and_print(message, level=logging.INFO):
+    print(message)
+    if level == logging.INFO:
+        logging.info(message)
+    elif level == logging.ERROR:
+        logging.error(message)
+
 config = configparser.ConfigParser()
 current_dir = os.path.dirname(os.path.abspath(__file__))
 config_file = 'Upconfig.cfg'
@@ -43,16 +51,16 @@ for filename in os.listdir(data_dir):
             files = {'file': (filename, file, 'text/csv')}
             try:
                 response = requests.post(SERVER_URL, files=files)
-                logging.info(f"File {filename} sent. Response: {response.status_code}")
+                log_and_print(f"File {filename} sent. Response: {response.status_code}")
                 if response.status_code == 200:
                     # Add the file to the tracker after successful upload
                     save_uploaded_file(filename)
                     files_uploaded = True
-                    logging.info(f"File {filename} uploaded and recorded in tracker.")
+                    log_and_print(f"File {filename} uploaded and recorded in tracker.")
                 else:
-                    logging.error(f"File {filename} failed to upload. Status code: {response.status_code}")
+                    log_and_print(f"File {filename} failed to upload. Status code: {response.status_code}", logging.ERROR)
             except Exception as e:
-                logging.error(f"Error sending file {filename}: {e}")
+                log_and_print(f"Error sending file {filename}: {e}", logging.ERROR)
 
-if files_uploaded == False:
-    logging.info("No files were uploaded during this run.")
+if not files_uploaded:
+    log_and_print("No files were uploaded during this run.")
