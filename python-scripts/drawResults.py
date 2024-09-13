@@ -99,6 +99,8 @@ def drawResults(data_folder):
     # Check for NaN values in calculated columns
     print("\nNaN count in calculated columns:")
     print(all_data[['MA', 'STD', 'Lower_Percentile', 'Upper_Percentile']].isna().sum())
+    
+
 
 if __name__ == "__main__":
     import sys
