@@ -44,7 +44,8 @@ def upload_file(filename):
     with open(file_path, 'rb') as file:
         files = {'file': (filename, file, 'text/csv')}
         try:
-            response = requests.post(SERVER_URL, files=files)
+            # Set a timeout of 30 seconds (adjust as needed)
+            response = requests.post(SERVER_URL, files=files, timeout=30)
             log_and_print(f"File {filename} sent. Response: {response.status_code}")
             if response.status_code == 200:
                 log_and_print(f"File {filename} uploaded successfully.")
@@ -52,8 +53,14 @@ def upload_file(filename):
             else:
                 log_and_print(f"File {filename} failed to upload. Status code: {response.status_code}", logging.ERROR)
                 return False
+        except requests.exceptions.Timeout:
+            log_and_print(f"Timeout error while uploading file {filename}", logging.ERROR)
+            return False
+        except requests.exceptions.ConnectionError:
+            log_and_print(f"Connection error while uploading file {filename}. Server might be unavailable.", logging.ERROR)
+            return False
         except Exception as e:
-            log_and_print(f"Error sending file {filename}: {e}", logging.ERROR)
+            log_and_print(f"Unexpected error sending file {filename}: {e}", logging.ERROR)
             return False
 
 def move_file_to_uploaded(filename):
