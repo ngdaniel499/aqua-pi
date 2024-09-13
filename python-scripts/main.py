@@ -57,7 +57,7 @@ try:
     config_file = configfilewithpath.split('\\')[-1]
     base_dir = config.get('Section1', 'base_dir')
     slave_dir = config.get('Section1', 'slave_dir')
-    fpath = os.path.join(current_dir, 'data/active-data')
+    fpath = os.path.join(current_dir, 'data/')
     stationid = config.get('Section1', 'stationid')
     readinterval = config.getfloat('Section1', 'readinterval')
     cdompin = config.getint('Section1', 'cdompin')
@@ -71,10 +71,10 @@ try:
     turbadc = config.getint('Section1', 'turbadc')
     tempadc = config.getint('Section1', 'tempadc')
     pumpflush = config.getint('Section1', 'pumpflush')
-    server_ip = config.get('Section1', 'server_ip')
-    username = config.get('Section1', 'username')
-    password = config.get('Section1', 'password')
-    ftp_dir = config.get('Section1', 'ftp_dir')
+    #server_ip = config.get('Section1', 'server_ip')
+    #username = config.get('Section1', 'username')
+    #password = config.get('Section1', 'password')
+    #ftp_dir = config.get('Section1', 'ftp_dir')
     #Get calibration constants
     chlslope = config.getfloat('Section1', 'chlslope')
     chlint = config.getfloat('Section1', 'chlint')
