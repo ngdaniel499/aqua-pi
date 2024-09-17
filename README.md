@@ -55,10 +55,11 @@ Refernce: https://learn.adafruit.com/adafruits-raspberry-pi-lesson-11-ds18b20-te
 	sudo modprobe w1-therm #add to /etc/rc.local (to apply at every boot)
 
 #### Install python and setup virtual environment
+	cd ~/aqua-pi
 
 	sudo apt-get install python3 python3-pip
 
-	python3 -m venv venv-aquapi
+	python3 -m venv .venv
 
 	source venv-aquapi/bin/activate
 
@@ -67,4 +68,4 @@ Refernce: https://learn.adafruit.com/adafruits-raspberry-pi-lesson-11-ds18b20-te
 	pip install -r requirements.txt
 #### Setup Crontab with debugging log
 	crontab -e #add the line below to the bottom of crontab and save
- 	*/15 * * * * (date && echo "Starting job" && cd ~/ && echo "Changed directory" && . venv-aquapi/bin/activate && echo "Activated venv" && python aqua-pi/python-scripts/main.py && echo "Ran Python script") >> /tmp/cronrun.log 2>&1
+ 	*/15 * * * * /home/pi/aqua-pi/python-scripts/script.sh

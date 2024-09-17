@@ -1,14 +1,10 @@
 certifi==2024.8.30
 charset-normalizer==3.3.2
-configparser==7.1.0
-future==1.0.0
-idna==3.8
-iso8601==2.1.0
-PyYAML==6.0.2
+idna==3.10
+pyserial==3.5
 requests==2.32.3
 RPi.GPIO==0.7.1
-serial==0.0.97
 spidev==3.6
-urllib3==2.2.2
+urllib3==2.2.3
 wiringpi==2.60.1
 wiringpi2==2.32.3
