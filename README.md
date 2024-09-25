@@ -69,5 +69,5 @@ Refernce: https://learn.adafruit.com/adafruits-raspberry-pi-lesson-11-ds18b20-te
 	*/15 * * * * /home/pi/aqua-pi/python-scripts/cron-main.sh
 	
 	# Run Pump script every 15 minutes with a 7 minute offset
-	7-59/15 * * * * /home/pi/aqua-pi/cron-pump.sh
+	7-59/15 * * * * /home/pi/aqua-pi/python-scripts/cron-pump.sh
  
