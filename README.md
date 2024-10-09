@@ -53,10 +53,13 @@ Refernce: https://learn.adafruit.com/adafruits-raspberry-pi-lesson-11-ds18b20-te
 
 	sudo reboot
 
+	sudo nano /etc/rc.local
 
-	sudo modprobe w1-gpio #add to /etc/rc.local (to apply at every boot)
+	#add the following two lines
+   
+	sudo modprobe w1-gpio
 
-	sudo modprobe w1-therm #add to /etc/rc.local (to apply at every boot)
+	sudo modprobe w1-therm
 
 #### Install python and setup virtual environment
 	cd ~/aqua-pi
