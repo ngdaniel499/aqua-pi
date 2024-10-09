@@ -35,6 +35,10 @@ OS Customisation settings:
 	General>Set Locale settings>Keyboard Layout: US
 
 ### RPi setup
+	sudo ip link set eth1 down
+ 
+  	sudo ip link set usb0 down
+  
 	sudo apt-get update
 
 	sudo apt-get upgrade
