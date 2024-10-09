@@ -62,6 +62,8 @@ Refernce: https://learn.adafruit.com/adafruits-raspberry-pi-lesson-11-ds18b20-te
 	sudo modprobe w1-therm
 
 #### Install python and setup virtual environment
+	git clone https://github.com/ngdaniel499/aqua-pi.git
+ 
 	cd ~/aqua-pi
 
 	sudo apt-get install python3 python3-pip
