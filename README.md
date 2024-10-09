@@ -43,6 +43,21 @@ OS Customisation settings:
 
 	sudo apt-get upgrade
 
+#### configure startup for 1-wire and wlan0
+	sudo nano /etc/rc.local
+
+	#add the following lines
+
+	
+	#disable ethernet (remove these ip link lines if you want to use ethernet)
+	ip link set eth1 down
+ 
+	ip link set usb0 down
+     
+	sudo modprobe w1-gpio
+	
+	sudo modprobe w1-therm
+
 #### Turn on 1-wire
 
 Refernce: https://learn.adafruit.com/adafruits-raspberry-pi-lesson-11-ds18b20-temperature-sensing/ds18b20
@@ -53,23 +68,13 @@ Refernce: https://learn.adafruit.com/adafruits-raspberry-pi-lesson-11-ds18b20-te
 
 	sudo reboot
 
-	sudo nano /etc/rc.local
 
-	#add the following lines
-
-	
-	#disable ethernet (use wlan)
-	ip link set eth1 down
- 
-	ip link set usb0 down
-     
-	sudo modprobe w1-gpio
-	
-	sudo modprobe w1-therm
 
 #### Install aqua-pi files and dependencies and setup virtual environment
 	sudo apt install git
- 	cd ~
+ 
+  	cd ~
+  
  	git clone https://github.com/ngdaniel499/aqua-pi.git
  
 	cd ~/aqua-pi
