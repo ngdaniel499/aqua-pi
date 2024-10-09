@@ -55,14 +55,22 @@ Refernce: https://learn.adafruit.com/adafruits-raspberry-pi-lesson-11-ds18b20-te
 
 	sudo nano /etc/rc.local
 
-	#add the following two lines
-   
-	sudo modprobe w1-gpio
+	#add the following lines
 
+	
+	#disable ethernet (use wlan)
+	ip link set eth1 down
+ 
+	ip link set usb0 down
+     
+	sudo modprobe w1-gpio
+	
 	sudo modprobe w1-therm
 
-#### Install python and setup virtual environment
-	git clone https://github.com/ngdaniel499/aqua-pi.git
+#### Install aqua-pi files and dependencies and setup virtual environment
+	sudo apt install git
+ 	cd ~
+ 	git clone https://github.com/ngdaniel499/aqua-pi.git
  
 	cd ~/aqua-pi
 
