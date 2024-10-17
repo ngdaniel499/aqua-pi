@@ -63,18 +63,12 @@ try:
     cdompin = config.getint('Section1', 'cdompin')
     chlpin = config.getint('Section1', 'chlpin')    
     temppin = config.getint('Section1', 'temppin')
-    pumppin = config.getint('Section1', 'pumppin')
     condpin = config.getint('Section1', 'condpin')
     turbpin = config.getint('Section1', 'turbpin')
     cdomadc = config.getint('Section1', 'cdomadc')
     chladc = config.getint('Section1', 'chladc')
     turbadc = config.getint('Section1', 'turbadc')
     tempadc = config.getint('Section1', 'tempadc')
-    pumpflush = config.getint('Section1', 'pumpflush')
-    #server_ip = config.get('Section1', 'server_ip')
-    #username = config.get('Section1', 'username')
-    #password = config.get('Section1', 'password')
-    #ftp_dir = config.get('Section1', 'ftp_dir')
     #Get calibration constants
     chlslope = config.getfloat('Section1', 'chlslope')
     chlint = config.getfloat('Section1', 'chlint')
@@ -101,9 +95,6 @@ try:
     for x in range(0, 1):
         # Flush flow chamber
         wiringpi.wiringPiSetupGpio()
-        wiringpi.pinMode(pumppin, 1)
-        wiringpi.digitalWrite(pumppin, 1)
-        ##time.sleep(pumpflush*60)
         
         # Conduct Measurements
 
@@ -125,8 +116,6 @@ try:
         # Temp
         TempRaw, TempVolts, TempCal = readtemp(temppin, tempadc, tempslope, tempint)
         
-        # Stop Pump
-        wiringpi.digitalWrite(pumppin, 0)
         #time.sleep(5)
         # For testing print results to screen
         print('Probe_Tempraw', Probe_TempRaw)
