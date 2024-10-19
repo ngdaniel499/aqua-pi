@@ -53,8 +53,6 @@ OS Customisation settings:
 	ip link set eth1 down
 
  	ip link set eth0 down
- 
-	ip link set usb0 down
      
 	sudo modprobe w1-gpio
 	
