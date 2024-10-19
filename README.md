@@ -47,16 +47,18 @@ OS Customisation settings:
 	sudo nano /etc/rc.local
 
 	#add the following lines above exit 0
+
+	
+	#disable ethernet (remove these ip link lines if you want to use ethernet)
+	ip link set eth1 down
+
+ 	ip link set eth0 down
+ 
+	ip link set usb0 down
      
 	sudo modprobe w1-gpio
 	
 	sudo modprobe w1-therm
-
- 	sudo nano /etc/network/interfaces
-  	#add the following lines 
-   	auto wlan0
-	iface wlan0 inet dhcp
-    		metric 1
 
 #### Turn on 1-wire
 
