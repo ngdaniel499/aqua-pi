@@ -31,7 +31,7 @@ import RPi.GPIO as GPIO
 from decimal import*
 import signal
 
-from SNSR import readadc, readchl, readtemp, readcdom, readturb, readcond
+from SNSR import readadc, readchl, readtemp, readcdom, readcond
 
 wiringpi.wiringPiSetupGpio()
 
@@ -42,7 +42,7 @@ def open_outputfile(fpath, stationid):
         f = open(fpathf, 'a')
     else:
         f = open(fpathf, 'w')
-        headerline = 'Time,Probe_TempRaw,Probe_TempCal,Condraw,CondCal,SpCond,Salinity,TurbRaw,TurbCal,TurbManu,ChlRaw,ChlVolts,ChlCal,CDOMRaw,CDOMVolts,CDOMCal,CDOMChlEQ,ChlAdj,TempRaw,TempCal'
+        headerline = 'Time,Probe_TempRaw,Probe_TempCal,Condraw,CondCal,SpCond,Salinity,ChlRaw,ChlVolts,ChlCal,CDOMRaw,CDOMVolts,CDOMCal,CDOMChlEQ,ChlAdj,TempRaw,TempCal'
         f.write(str(headerline))
         f.write('\n')
     return f, outfile, fpathf
@@ -64,10 +64,8 @@ try:
     chlpin = config.getint('Section1', 'chlpin')    
     temppin = config.getint('Section1', 'temppin')
     condpin = config.getint('Section1', 'condpin')
-    turbpin = config.getint('Section1', 'turbpin')
     cdomadc = config.getint('Section1', 'cdomadc')
     chladc = config.getint('Section1', 'chladc')
-    turbadc = config.getint('Section1', 'turbadc')
     tempadc = config.getint('Section1', 'tempadc')
     #Get calibration constants
     chlslope = config.getfloat('Section1', 'chlslope')
@@ -76,8 +74,6 @@ try:
     cdomint = config.getfloat('Section1', 'cdomint')
     cdomchlslope = config.getfloat('Section1', 'cdomchlslope')
     cdomchlint = config.getfloat('Section1', 'cdomchlint')
-    turbslope = config.getfloat('Section1', 'turbslope')
-    turbint = config.getfloat('Section1', 'turbint')
     conda = config.getfloat('Section1', 'conda')
     condb = config.getfloat('Section1', 'condb')
     condc = config.getfloat('Section1', 'condc')
@@ -101,9 +97,6 @@ try:
         # Temperature / conductivity
         Probe_TempRaw, CondRaw, Probe_TempCal, CondCal, SpCond, Salinity = readcond(condpin, 'USB0', conda, condb, condc, condd, Probe_tempslope, Probe_tempint)
 
-        # Turbidity
-        TurbRaw, TurbCal, TurbManu = readturb('USB1', turbslope, turbint)
-    
         # Chl
         ChlRaw, ChlVolts, ChlCal = readchl(chlpin, chladc, chlslope, chlint)
 
@@ -124,8 +117,6 @@ try:
         print('CondCal', CondCal)
         print('SpCond', SpCond)
         print('Salinity', Salinity)
-        print('Turbraw', TurbRaw)
-        print('Turbcal', TurbCal)
         print('ChlRaw)', ChlRaw)
         print('ChlVolts', ChlVolts)
         print('ChlCal', ChlCal)
@@ -139,7 +130,7 @@ try:
         sys.stdout.flush()
 
         # Write results to file
-        r = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s' % (time.strftime("%d-%m-%Y %H:%M:%S"), Probe_TempRaw, Probe_TempCal, CondRaw, CondCal, SpCond, Salinity, TurbRaw, TurbCal, TurbManu, ChlRaw, ChlVolts, ChlCal, CDOMRaw, CDOMVolts, CDOMCal, CDOMChlEQ, ChlAdj, TempRaw, TempCal)
+        r = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s' % (time.strftime("%d-%m-%Y %H:%M:%S"), Probe_TempRaw, Probe_TempCal, CondRaw, CondCal, SpCond, Salinity, ChlRaw, ChlVolts, ChlCal, CDOMRaw, CDOMVolts, CDOMCal, CDOMChlEQ, ChlAdj, TempRaw, TempCal)
         f.write(str(r))
         f.write('\n')
         f.close()

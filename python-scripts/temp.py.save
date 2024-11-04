@@ -13,13 +13,12 @@
 #                       Relay operation corrected, CAMPBELL temperature sensor interfaced
 # run this script as: sudo python AquaPi.py config.cfg
 # parameters values are given in Upconfig.cfg
-# Modification 4 By: Daniel Ng, WhaleX https://github.com/ngdaniel499/aqua-pi/tree/main
 #----------------------------------------------------------------------------------------------
 import os
 import glob
 import time
 import datetime
-import configparser as ConfigParser
+import ConfigParser
 import sys
 import serial
 #from ftplib import FTP
@@ -158,8 +157,8 @@ try:
 except:
     tb = sys.exc_info()[2]
     tbinfo = traceback.format_tb(tb)[0]
-    error_msg = tbinfo + " " + str(sys.exc_info()[1])
-    print(error_msg)
+   error_msg = tbinfo + " " + str(sys.exc_info()[1])
+    print error_msg
     f.write(error_msg)
     f.close()
 
