@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AquaPi Data Analysis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .station {
+            background-color: #fff;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .station h2 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        .graph img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 20px 0;
+        }
+        .collapsible {
+            background-color: #3498db;
+            color: white;
+            cursor: pointer;
+            padding: 18px;
+            width: 100%;
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 15px;
+            transition: 0.4s;
+            border-radius: 5px;
+        }
+        .active, .collapsible:hover {
+            background-color: #2980b9;
+        }
+        .content {
+            padding: 0 18px;
+            display: none;
+            overflow: hidden;
+            background-color: #f1f1f1;
+            border-radius: 0 0 5px 5px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin-bottom: 10px;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .regenerate-btn {
+            background-color: #f0f0f0;
+            color: #333;
+            border: 1px solid #ccc;
+            padding: 5px 10px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 12px;
+            margin: 10px 0;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: background-color 0.2s;
+            font-family: monospace;
+            box-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .regenerate-btn:hover {
+            background-color: #e0e0e0;
+        }
+
+        .regenerate-btn::before {
+            content: "⚠️ ";
+            font-size: 10px;
+        }
+        .debug-note {
+            font-size: 12px;
+            color: #666;
+            font-style: italic;
+            margin-top: 5px;
+        }
+        .flash-message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .flash-success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .flash-error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+                .graph-update-time {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+            margin-bottom: 10px;
+        }
+        .flashes {
+        list-style-type: none;
+        padding: 0;
+        }
+        .flashes li {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        .flashes .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .flashes .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .flashes .warning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+
+
+    <h1>AquaPi Data Analysis</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul class="flashes">
+                {% for category, message in messages %}
+                    <li class="{{ category }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+    
+
+    
+    {% for folder in folders %}
+        <div class="station">
+            <h2>Station: <a href="{{ url_for('station_detail', station_name=folder.folder) }}">{{ folder.folder }}</a></h2>
+            <h3>
+                {% if folder.last_updated %}
+                    Last Updated: {{ folder.last_updated }}
+                {% endif %}
+            </h3>
+            <div class="graph">
+                {% set graph_file = folder.folder + '_chlorophyll_analysis.png' %}
+                {% if graph_file in folder.files %}
+                    <img src="{{ url_for('download_file', folder=folder.folder, filename=graph_file) }}" alt="Chlorophyll Analysis for {{ folder.folder }}">
+                {% else %}
+                    <p>No analysis graph available for this station yet.</p>
+                {% endif %}
+            </div>
+            <button class="collapsible">View Files</button>
+            <div class="content">
+                <a href="{{ url_for('download_folder', folder=folder.folder) }}">Download All as ZIP</a>
+                <ul>
+                    {% for filename in folder.files %}
+                        <li>
+                            <a href="{{ url_for('download_file', folder=folder.folder, filename=filename) }}">{{ filename }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    {% endfor %}
+    <form action="{{ url_for('regenerate_graphs') }}" method="post">
+        <button type="submit" class="regenerate-btn">debug: Regenerate All Graphs</button>
+    </form>
+    <p class="debug-note">Note: This is a maintenance function. Not typically required</p>
+
+    <script>
+        var coll = document.getElementsByClassName("collapsible");
+        var i;
+
+        for (i = 0; i < coll.length; i++) {
+            coll[i].addEventListener("click", function() {
+                this.classList.toggle("active");
+                var content = this.nextElementSibling;
+                if (content.style.display === "block") {
+                    content.style.display = "none";
+                } else {
+                    content.style.display = "block";
+                }
+            });
+        }
+    </script>
+</body>
+</html>

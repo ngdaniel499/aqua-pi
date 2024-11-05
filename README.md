@@ -46,13 +46,13 @@ OS Customisation settings:
 #### configure startup for 1-wire and wlan0
 	sudo nano /etc/rc.local
 
-	#add the following lines
+	#add the following lines above exit 0
 
 	
 	#disable ethernet (remove these ip link lines if you want to use ethernet)
 	ip link set eth1 down
- 
-	ip link set usb0 down
+
+ 	ip link set eth0 down
      
 	sudo modprobe w1-gpio
 	
