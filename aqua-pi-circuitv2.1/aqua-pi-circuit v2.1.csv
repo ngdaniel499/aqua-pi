@@ -1,0 +1,12 @@
+"Id";"Designator";"Footprint";"Quantity";"Designation";"Supplier and ref";
+1;"relay control";"PinSocket_1x05_P2.54mm_Horizontal";1;"Conn_01x05_Pin";;;
+2;"R1,R4,R3";"R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal";3;"1k";;;
+3;"R2";"R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal";1;"2k";;;
+4;"Chla gain";"PinSocket_1x02_P2.54mm_Horizontal";1;"Conn_01x02_Pin";;;
+5;"Sensor in";"PinSocket_1x08_P2.54mm_Horizontal";1;"Conn_01x08_Pin";;;
+6;"C2";"C_Disc_D3.0mm_W1.6mm_P2.50mm";1;"1uF";;;
+7;"J5";"PinSocket_1x02_P2.54mm_Horizontal";1;"Conn_01x02";;;
+8;"RPI";"PinHeader_2x20_P2.54mm_Vertical";1;"Conn_02x20_Odd_Even";;;
+9;"Q2,Q1";"TO-92_Inline";2;"BC549";;;
+10;"U1";"PDIP16_300MC_MCH";1;"MCP3208";;;
+11;"C1";"C_Disc_D3.0mm_W1.6mm_P2.50mm";1;"100nF";;;
