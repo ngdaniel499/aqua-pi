@@ -96,7 +96,7 @@ def readchl(chlpin, chladc,chlslope, chlint, gain):
         ADC_Chl=chladc
         resp_cumulative = 0
         n_resp = 0
-        t_sleep = 0.03
+        t_sleep = 0.01
         start_time = time.time()
         while time.time() - start_time < 3:
             n_resp += 1
