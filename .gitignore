@@ -3,3 +3,5 @@ python-scripts/data/*
 **/__pycache__/
 python-scripts/upload.log
 python-scripts/uploaded_files.txt
+python-scripts/Upconfig.cfg
+python-scripts/logs/
