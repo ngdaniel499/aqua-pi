@@ -67,6 +67,7 @@ def readadc(adcnum, clockpin, mosipin, misopin, cspin):
 
 def readchl(chlpin, chladc,chlslope, chlint, gain):
     try:
+        print(gain)
         if gain not in {"1", "10", "100"}:
             print(f"Invalid gain value '{gain}'. Must be '1', '10', or '100'. Exiting.")
             sys.exit(1)
