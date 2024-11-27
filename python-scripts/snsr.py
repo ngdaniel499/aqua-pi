@@ -100,7 +100,8 @@ def readchl(chlpin, chladc,chlslope, chlint, gain):
         start_time = time.time()
         while time.time() - start_time < 3:
             n_resp += 1
-            resp_moving_average = readadc(ADC_Chl,SPICLK,SPIMOSI,SPIMISO,SPICS)
+            print(resp_moving_average)
+            resp_moving_average += readadc(ADC_Chl,SPICLK,SPIMOSI,SPIMISO,SPICS)
             time.sleep(t_sleep)
         resp= resp_moving_average/n_resp
         # Format response from ADC chip
