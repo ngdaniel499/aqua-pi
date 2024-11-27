@@ -76,15 +76,15 @@ def readchl(chlpin, chladc,chlslope, chlint, gain):
         #Turn on chl probe using relay
         wiringpi.pinMode(chlpin, 1)
         wiringpi.digitalWrite(chlpin, 0)
-        if gain == 1
+        if gain == 1:
             print("Chla gain: 1x")
             wiringpi.digitalWrite(TENX_PIN, 0)
             wiringpi.digitalWrite(HUNDREDX_PIN, 0)
-        elif gain == 10
+        elif gain == 10:
             print("Chla gain: 10x")
             wiringpi.digitalWrite(TENX_PIN, 1)
             wiringpi.digitalWrite(HUNDREDX_PIN, 0)
-        elif gain == 100
+        elif gain == 100:
             print("Chla gain: 100x")
             wiringpi.digitalWrite(TENX_PIN, 0)
             wiringpi.digitalWrite(HUNDREDX_PIN, 1)
