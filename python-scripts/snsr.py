@@ -94,16 +94,18 @@ def readchl(chlpin, chladc,chlslope, chlint, gain):
         #read data from ADC chip
         #read data from ADC Chl 0
         ADC_Chl=chladc
-        resp_moving_average = 0
+        resp_cumulative = 0
         n_resp = 0
         t_sleep = 0.03
         start_time = time.time()
         while time.time() - start_time < 3:
             n_resp += 1
-            print(resp_moving_average)
-            resp_moving_average += readadc(ADC_Chl,SPICLK,SPIMOSI,SPIMISO,SPICS)
+            #debug
+            resp_individual = readadc(ADC_Chl,SPICLK,SPIMOSI,SPIMISO,SPICS)
+            print(resp_individual)
+            resp_cumulative += resp_individual
             time.sleep(t_sleep)
-        resp= resp_moving_average/n_resp
+        resp= resp_cumulative/n_resp
         # Format response from ADC chip
         ChlRaw = resp
         ChlVolts = (float(ChlRaw) / 4095) * 5
