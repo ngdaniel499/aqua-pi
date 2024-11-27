@@ -31,7 +31,7 @@ import RPi.GPIO as GPIO
 from decimal import*
 import signal
 
-from SNSR import readadc, readchl, readtemp, readcdom, readturb, readcond
+from SNSR import readadc, readchl, readtemp, readcdom, readcond
 
 wiringpi.wiringPiSetupGpio()
 
@@ -97,7 +97,6 @@ try:
         # Temperature / conductivity
         Probe_TempRaw, CondRaw, Probe_TempCal, CondCal, SpCond, Salinity = readcond(condpin, 'USB0', conda, condb, condc, condd, Probe_tempslope, Probe_tempint)
 
-        
         # Chl
         ChlRaw, ChlVolts, ChlCal = readchl(chlpin, chladc, chlslope, chlint)
 
