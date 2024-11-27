@@ -9,6 +9,7 @@ import sys
 import traceback
 import collections
 import math
+
 # Initialize wiringPi
 wiringpi.wiringPiSetupGpio()
 
@@ -93,52 +94,43 @@ def continuous_chl_monitor(config_file='Upconfig.cfg'):
         t_sleep = 0.01
         wiringpi.digitalWrite(22, 0)
         wiringpi.digitalWrite(27, 1)
+        
+        running_mean = 0
+        running_std_dev = 0
+        n = 0
+        
         while True:
             try:
-                # Initialize variables for CLT
-                running_mean = 0
-                running_std_dev = 0
-                n = 0
-                threshold_error = 0.01  # Stop when the error is below this threshold
-                start_time = time.time()
+                # Read and print data
+                resp = readadc(chladc, SPICLK, SPIMOSI, SPIMISO, SPICS)
 
-                while time.time() - start_time < 20:
-                    # Read and print data
-                    resp = readadc(chladc, SPICLK, SPIMOSI, SPIMISO, SPICS)
+                chl_raw = resp
+                chl_volts = (float(chl_raw) / 4095) * 5.0
+                chl_cal = (chl_raw * chlslope) + chlint
+                timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
 
-                    chl_raw = resp
-                    chl_volts = (float(chl_raw) / 4095) * 5.0
-                    chl_cal = (chl_raw * chlslope) + chlint
-                    timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
+                # Update sample count
+                n += 1
+                
+                # Running mean calculation
+                running_mean += (chl_cal - running_mean) / n
+                
+                # Running standard deviation calculation
+                running_std_dev += (chl_cal - running_mean) * (chl_cal - running_mean - running_std_dev) / n
+                
+                # Calculate the standard error of the mean (SEM)
+                sem = running_std_dev / math.sqrt(n)
+                
+                # 95% Confidence Interval (1.96 * SEM for 95% confidence)
+                ci_lower = running_mean - 1.96 * sem
+                ci_upper = running_mean + 1.96 * sem
+                
+                # Print the data with running average and confidence interval
+                print(f"{timestamp}  {chl_raw:6d}  {chl_volts:8.3f}  {chl_cal:10.3f}   "
+                    f"Running Mean: {running_mean:10.3f}  SEM: {sem:10.3f}  "
+                    f"CI: ({ci_lower:10.3f}, {ci_upper:10.3f})")
 
-                    # Update sample count
-                    n += 1
-                    
-                    # Running mean calculation
-                    running_mean += (chl_cal - running_mean) / n
-                    
-                    # Running standard deviation calculation
-                    running_std_dev += (chl_cal - running_mean) * (chl_cal - running_mean - running_std_dev) / n
-                    
-                    # Calculate the standard error of the mean (SEM)
-                    sem = running_std_dev / math.sqrt(n)
-                    
-                    # 95% Confidence Interval (1.96 * SEM for 95% confidence)
-                    ci_lower = running_mean - 1.96 * sem
-                    ci_upper = running_mean + 1.96 * sem
-                    
-                    # Check if the margin of error (confidence interval width) is below the threshold
-                    margin_of_error = ci_upper - ci_lower
-                    if margin_of_error < threshold_error:
-                        print(f"Confidence interval is sufficiently narrow. Stopping data collection.")
-                        break
-                    
-                    # Print the data with running average and confidence interval
-                    print(f"{timestamp}  {chl_raw:6d}  {chl_volts:8.3f}  {chl_cal:10.3f}   "
-                        f"Running Mean: {running_mean:10.3f}  SEM: {sem:10.3f}  "
-                        f"CI: ({ci_lower:10.3f}, {ci_upper:10.3f})  Margin of Error: {margin_of_error:10.3f}")
-
-                    time.sleep(t_sleep)
+                time.sleep(t_sleep)
                 
             except Exception as e:
                 print(f"Error reading sensor: {str(e)}")
