@@ -31,7 +31,7 @@ import RPi.GPIO as GPIO
 from decimal import*
 import signal
 
-from SNSR import readadc, readchl, readtemp, readcdom, readcond
+from snsr import readadc, readchl, readtemp, readcdom, readcond
 
 wiringpi.wiringPiSetupGpio()
 
@@ -98,8 +98,9 @@ try:
         Probe_TempRaw, CondRaw, Probe_TempCal, CondCal, SpCond, Salinity = readcond(condpin, 'USB0', conda, condb, condc, condd, Probe_tempslope, Probe_tempint)
 
         # Chl
-        ChlRaw, ChlVolts, ChlCal = readchl(chlpin, chladc, chlslope, chlint)
-
+        ChlRaw_1, ChlVolts_1, ChlCal_1 = readchl(chlpin, chladc, chlslope, chlint, 1)
+        ChlRaw_10, ChlVolts_10, ChlCal_10 = readchl(chlpin, chladc, chlslope, chlint, 10)
+        ChlRaw_100, ChlVolts_100, ChlCal_100 = readchl(chlpin, chladc, chlslope, chlint, 100)
         time.sleep(0.5)
         
         # CDOM
@@ -117,9 +118,15 @@ try:
         print('CondCal', CondCal)
         print('SpCond', SpCond)
         print('Salinity', Salinity)
-        print('ChlRaw)', ChlRaw)
-        print('ChlVolts', ChlVolts)
-        print('ChlCal', ChlCal)
+        print('ChlRaw)', ChlRaw_1)
+        print('ChlVolts', ChlVolts_1)
+        print('ChlCal', ChlCal_1)
+        print('ChlRaw)', ChlRaw_10)
+        print('ChlVolts', ChlVolts_10)
+        print('ChlCal', ChlCal_10)
+        print('ChlRaw)', ChlRaw_100)
+        print('ChlVolts', ChlVolts_100)
+        print('ChlCal', ChlCal_100)
         print('CDOMRaw', CDOMRaw)
         print('CDOMVolts', CDOMVolts)
         print('CDOMCal', CDOMCal)

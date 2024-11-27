@@ -65,21 +65,48 @@ def readadc(adcnum, clockpin, mosipin, misopin, cspin):
     adcout>>=1
     return adcout
 
-def readchl(chlpin, chladc,chlslope, chlint):
+def readchl(chlpin, chladc,chlslope, chlint, gain):
     try:
-        
+        if gain not in {"1", "10", "100"}:
+            print(f"Invalid gain value '{gain}'. Must be '1', '10', or '100'. Exiting.")
+            sys.exit(1)
+
+        TENX_PIN = 22
+        HUNDREDX_PIN = 27
         #Turn on chl probe using relay
         wiringpi.pinMode(chlpin, 1)
         wiringpi.digitalWrite(chlpin, 0)
+        if gain == 1
+            print("Chla gain: 1x")
+            wiringpi.digitalWrite(TENX_PIN, 0)
+            wiringpi.digitalWrite(HUNDREDX_PIN, 0)
+        elif gain == 10
+            print("Chla gain: 10x")
+            wiringpi.digitalWrite(TENX_PIN, 1)
+            wiringpi.digitalWrite(HUNDREDX_PIN, 0)
+        elif gain == 100
+            print("Chla gain: 100x")
+            wiringpi.digitalWrite(TENX_PIN, 0)
+            wiringpi.digitalWrite(HUNDREDX_PIN, 1)
+             
         time.sleep(5)
         #read data from ADC chip
         #read data from ADC Chl 0
         ADC_Chl=chladc
-        resp=readadc(ADC_Chl,SPICLK,SPIMOSI,SPIMISO,SPICS)
+        resp_moving_average = 0
+        n_resp = 0
+        t_sleep = 0.03
+        start_time = time.time()
+        while time.time() - start_time < 3:
+            n_resp += 1
+            resp_moving_average = readadc(ADC_Chl,SPICLK,SPIMOSI,SPIMISO,SPICS)
+            time.sleep(t_sleep)
+        resp= resp_moving_average/n_resp
         # Format response from ADC chip
         ChlRaw = resp
-        ChlVolts = (float(ChlRaw) / 4096) * 3.3
+        ChlVolts = (float(ChlRaw) / 4095) * 5
         ChlCal = (ChlRaw * chlslope) + chlint 
+        
         print("ChlRaw is:", ChlRaw)
         print("ChlVolts is:", ChlVolts)
         print("ChlCal is:", ChlCal)
@@ -106,7 +133,7 @@ def readcdom(cdompin, cdomadc,cdomslope, cdomint, cdomchlslope, cdomchlint):
         resp=readadc(ADC_Chl,SPICLK,SPIMOSI,SPIMISO,SPICS)
         # Format response from ADC chip
         CDOMRaw = resp
-        CDOMVolts = (float(CDOMRaw) / 4096) * 3.3
+        CDOMVolts = (float(CDOMRaw) / 4095) * 5
         CDOMCal = (CDOMRaw * cdomslope) + cdomint
         CDOMChlEQ = (CDOMRaw * cdomchlslope) + cdomchlint
         print("CDOMRaw is:", CDOMRaw)
@@ -138,7 +165,7 @@ def readtemp(temppin, tempadc,tempslope, tempint):
         resp=readadc(ADC_Chl,SPICLK,SPIMOSI,SPIMISO,SPICS)
         # Format response from ADC chip
         TempRaw = resp
-        TempVolts = (float(TempRaw) / 4096) * 3.3
+        TempVolts = (float(TempRaw) / 4095) * 5
         TempCal = (TempRaw * tempslope) + tempint 
         print("TempRaw is:", TempRaw)
         print("TempVolts is:", TempVolts)
