@@ -8,6 +8,7 @@ import os
 import sys
 import traceback
 import collections
+import math
 # Initialize wiringPi
 wiringpi.wiringPiSetupGpio()
 
@@ -94,10 +95,11 @@ def continuous_chl_monitor(config_file='Upconfig.cfg'):
         wiringpi.digitalWrite(27, 1)
         while True:
             try:
-                window_50 = collections.deque(maxlen=50)
-                window_300 = collections.deque(maxlen=300)
-                window_1000 = collections.deque(maxlen=1000)
-                
+                # Initialize variables for CLT
+                running_mean = 0
+                running_std_dev = 0
+                n = 0
+                threshold_error = 0.01  # Stop when the error is below this threshold
                 start_time = time.time()
 
                 while time.time() - start_time < 20:
@@ -109,21 +111,33 @@ def continuous_chl_monitor(config_file='Upconfig.cfg'):
                     chl_cal = (chl_raw * chlslope) + chlint
                     timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
 
-                    # Append current values to moving average queues
-                    window_50.append(chl_cal)
-                    window_300.append(chl_cal)
-                    window_1000.append(chl_cal)
-
-                    # Calculate moving averages
-                    avg_50 = sum(window_50) / len(window_50) if window_50 else 0
-                    avg_300 = sum(window_300) / len(window_300) if window_300 else 0
-                    avg_1000 = sum(window_1000) / len(window_1000) if window_1000 else 0
-
-                    # Print the data with the moving averages
+                    # Update sample count
+                    n += 1
+                    
+                    # Running mean calculation
+                    running_mean += (chl_cal - running_mean) / n
+                    
+                    # Running standard deviation calculation
+                    running_std_dev += (chl_cal - running_mean) * (chl_cal - running_mean - running_std_dev) / n
+                    
+                    # Calculate the standard error of the mean (SEM)
+                    sem = running_std_dev / math.sqrt(n)
+                    
+                    # 95% Confidence Interval (1.96 * SEM for 95% confidence)
+                    ci_lower = running_mean - 1.96 * sem
+                    ci_upper = running_mean + 1.96 * sem
+                    
+                    # Check if the margin of error (confidence interval width) is below the threshold
+                    margin_of_error = ci_upper - ci_lower
+                    if margin_of_error < threshold_error:
+                        print(f"Confidence interval is sufficiently narrow. Stopping data collection.")
+                        break
+                    
+                    # Print the data with running average and confidence interval
                     print(f"{timestamp}  {chl_raw:6d}  {chl_volts:8.3f}  {chl_cal:10.3f}   "
-                        f"Avg50: {avg_50:10.3f}  Avg300: {avg_300:10.3f}  Avg1000: {avg_1000:10.3f}")
-                
-                    # Wait for next reading
+                        f"Running Mean: {running_mean:10.3f}  SEM: {sem:10.3f}  "
+                        f"CI: ({ci_lower:10.3f}, {ci_upper:10.3f})  Margin of Error: {margin_of_error:10.3f}")
+
                     time.sleep(t_sleep)
                 
             except Exception as e:
