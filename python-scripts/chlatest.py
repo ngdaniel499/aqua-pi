@@ -7,7 +7,7 @@ import configparser as ConfigParser
 import os
 import sys
 import traceback
-
+import collections
 # Initialize wiringPi
 wiringpi.wiringPiSetupGpio()
 
@@ -83,30 +83,48 @@ def continuous_chl_monitor(config_file='Upconfig.cfg'):
         print(f"Pin: {chlpin}, ADC: {chladc}, Slope: {chlslope}, Intercept: {chlint}")
         print("\nTimestamp               Raw     Volts    Calibrated")
         print("-" * 50)
-
+        
         # Initial probe setup - turn it on once at the start
         wiringpi.pinMode(chlpin, 1)
         wiringpi.digitalWrite(chlpin, 0)
         time.sleep(readinterval)  # Brief delay for sensor to stabilize
         
+        t_sleep = 0.01
+        wiringpi.digitalWrite(22, 0)
+        wiringpi.digitalWrite(27, 1)
         while True:
             try:
-                # Read data from ADC
-                resp = readadc(chladc, SPICLK, SPIMOSI, SPIMISO, SPICS)
+                window_50 = collections.deque(maxlen=50)
+                window_300 = collections.deque(maxlen=300)
+                window_1000 = collections.deque(maxlen=1000)
                 
-                # Format response
-                chl_raw = resp
-                chl_volts = (float(chl_raw) / 4096) * 3.3
-                chl_cal = (chl_raw * chlslope) + chlint
+                start_time = time.time()
+
+                while time.time() - start_time < 20:
+                    # Read and print data
+                    resp = readadc(chladc, SPICLK, SPIMOSI, SPIMISO, SPICS)
+
+                    chl_raw = resp
+                    chl_volts = (float(chl_raw) / 4095) * 5.0
+                    chl_cal = (chl_raw * chlslope) + chlint
+                    timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
+
+                    # Append current values to moving average queues
+                    window_50.append(chl_cal)
+                    window_300.append(chl_cal)
+                    window_1000.append(chl_cal)
+
+                    # Calculate moving averages
+                    avg_50 = sum(window_50) / len(window_50) if window_50 else 0
+                    avg_300 = sum(window_300) / len(window_300) if window_300 else 0
+                    avg_1000 = sum(window_1000) / len(window_1000) if window_1000 else 0
+
+                    # Print the data with the moving averages
+                    print(f"{timestamp}  {chl_raw:6d}  {chl_volts:8.3f}  {chl_cal:10.3f}   "
+                        f"Avg50: {avg_50:10.3f}  Avg300: {avg_300:10.3f}  Avg1000: {avg_1000:10.3f}")
                 
-                # Get current timestamp
-                timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
-                
-                # Print formatted output
-                print(f"{timestamp}  {chl_raw:6d}  {chl_volts:8.3f}  {chl_cal:10.3f}")
-                
-                # Wait for next reading
-                time.sleep(0.3)
+                    # Wait for next reading
+                    time.sleep(t_sleep)
                 
             except Exception as e:
                 print(f"Error reading sensor: {str(e)}")
@@ -118,6 +136,8 @@ def continuous_chl_monitor(config_file='Upconfig.cfg'):
         print("\nMonitoring stopped by user")
         # Ensure probe is turned off
         wiringpi.digitalWrite(chlpin, 1)
+        wiringpi.digitalWrite(22, 0)
+        wiringpi.digitalWrite(27, 0)
         GPIO.cleanup()
     except Exception as e:
         tb = sys.exc_info()[2]
