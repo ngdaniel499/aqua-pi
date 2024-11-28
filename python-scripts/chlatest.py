@@ -27,6 +27,9 @@ GPIO.setup(SPIMISO, GPIO.IN)
 GPIO.setup(SPICLK, GPIO.OUT)
 GPIO.setup(SPICS, GPIO.OUT)
 
+GPIO.setup(22, GPIO.OUT) #10x pin
+GPIO.setup(27, GPIO.OUT) #100x
+
 def readadc(adcnum, clockpin, mosipin, misopin, cspin):
     if ((adcnum > 7) or (adcnum < 0)):
         return -1
