@@ -42,7 +42,7 @@ def open_outputfile(fpath, stationid):
         f = open(fpathf, 'a')
     else:
         f = open(fpathf, 'w')
-        headerline = 'Time,Probe_TempRaw,Probe_TempCal,Condraw,CondCal,SpCond,Salinity,ChlRaw,ChlVolts,ChlCal,CDOMRaw,CDOMVolts,CDOMCal,CDOMChlEQ,ChlAdj,TempRaw,TempCal'
+        headerline = 'Time,Probe_TempRaw,Probe_TempCal,Condraw,CondCal,SpCond,Salinity,ChlRaw,ChlRawRangeCI,ChlVolts,ChlVoltsRangeCI,ChlCal,ChlCalRangeCI,CDOMRaw,CDOMVolts,CDOMCal,CDOMChlEQ,ChlAdj,TempRaw,TempCal'
         f.write(str(headerline))
         f.write('\n')
     return f, outfile, fpathf
@@ -97,10 +97,23 @@ try:
         # Temperature / conductivity
         Probe_TempRaw, CondRaw, Probe_TempCal, CondCal, SpCond, Salinity = readcond(condpin, 'USB0', conda, condb, condc, condd, Probe_tempslope, Probe_tempint)
 
-        # Chl
-        ChlRaw_1, ChlVolts_1, ChlCal_1 = readchl(chlpin, chladc, chlslope, chlint, 1)
-        ChlRaw_10, ChlVolts_10, ChlCal_10 = readchl(chlpin, chladc, chlslope, chlint, 10)
-        ChlRaw_100, ChlVolts_100, ChlCal_100 = readchl(chlpin, chladc, chlslope, chlint, 100)
+        # Chl gain switching, start at 10x move to 100x if reading is too low, move to 1x if reading is too high
+
+        ChlRaw, ChlRaw_Range, ChlRaw_SEM, ChlVolts, ChlVolts_Range, ChlVolts_SEM, ChlVolts, ChlVolts_Range, ChlVolts_SEM = readchl(chlpin, chladc, chlslope, chlint, 10)
+        ChlGain = '10x'
+        if(ChlVolts < 0.3):
+            ChlRaw, ChlRaw_Range, ChlRaw_SEM, ChlVolts, ChlVolts_Range, ChlVolts_SEM, ChlCal, ChlCal_Range, ChlCal_SEM = readchl(chlpin, chladc, chlslope, chlint, 100)
+            ChlCal = ChlCal/10
+            ChlCal_Range = ChlCal_Range/10
+            ChlCal_SEM = ChlCal_SEM/10
+            ChlGain = '100x'
+        elif(ChlVolts > 4.5):
+            ChlRaw, ChlRaw_Range, ChlRaw_SEM, ChlVolts, ChlVolts_Range, ChlVolts_SEM, ChlCal, ChlCal_Range, ChlCal_SEM = readchl(chlpin, chladc, chlslope, chlint, 1)
+            ChlCal = ChlCal*10
+            ChlCal_Range = ChlCal_Range*10
+            ChlCal_SEM = ChlCal_SEM*10
+            ChlGain = '1x'
+
         time.sleep(0.5)
         
         # CDOM
@@ -118,15 +131,10 @@ try:
         print('CondCal', CondCal)
         print('SpCond', SpCond)
         print('Salinity', Salinity)
-        print('ChlRaw)', ChlRaw_1)
-        print('ChlVolts', ChlVolts_1)
-        print('ChlCal', ChlCal_1)
-        print('ChlRaw)', ChlRaw_10)
-        print('ChlVolts', ChlVolts_10)
-        print('ChlCal', ChlCal_10)
-        print('ChlRaw)', ChlRaw_100)
-        print('ChlVolts', ChlVolts_100)
-        print('ChlCal', ChlCal_100)
+        print('ChlGain', ChlGain)
+        print('ChlRaw', ChlRaw, '+-', ChlRaw_Range)
+        print('ChlVolts', ChlVolts, '+-', ChlVolts_Range)
+        print('ChlCal', ChlCal, '+-', ChlCal_Range)
         print('CDOMRaw', CDOMRaw)
         print('CDOMVolts', CDOMVolts)
         print('CDOMCal', CDOMCal)
@@ -137,7 +145,7 @@ try:
         sys.stdout.flush()
 
         # Write results to file
-        r = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s' % (time.strftime("%d-%m-%Y %H:%M:%S"), Probe_TempRaw, Probe_TempCal, CondRaw, CondCal, SpCond, Salinity, ChlRaw, ChlVolts, ChlCal, CDOMRaw, CDOMVolts, CDOMCal, CDOMChlEQ, ChlAdj, TempRaw, TempCal)
+        r = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s' % (time.strftime("%d-%m-%Y %H:%M:%S"), Probe_TempRaw, Probe_TempCal, CondRaw, CondCal, SpCond, Salinity, ChlRaw, ChlRaw_Range, ChlVolts, ChlVolts_Range, ChlCal, ChlCal_Range, CDOMRaw, CDOMVolts, CDOMCal, CDOMChlEQ, ChlAdj, TempRaw, TempCal)
         f.write(str(r))
         f.write('\n')
         f.close()

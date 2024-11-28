@@ -7,7 +7,7 @@ import sys
 import serial
 
 import traceback
-
+import math
 import spidev
 import wiringpi2 as wiringpi
 import RPi.GPIO as GPIO
@@ -65,18 +65,22 @@ def readadc(adcnum, clockpin, mosipin, misopin, cspin):
     adcout>>=1
     return adcout
 
-def readchl(chlpin, chladc,chlslope, chlint, gain):
+def readchl(chlpin, chladc, chlslope, chlint, gain):
     try:
-        print(gain)
+        # Validate gain
         if gain not in {1, 10, 100}:
             print(f"Invalid gain value '{gain}'. Must be '1', '10', or '100'. Exiting.")
             sys.exit(1)
 
+        # Define pin numbers
         TENX_PIN = 22
         HUNDREDX_PIN = 27
-        #Turn on chl probe using relay
+
+        # Turn on chl probe using relay
         wiringpi.pinMode(chlpin, 1)
         wiringpi.digitalWrite(chlpin, 0)
+
+        # Set gain
         if gain == 1:
             print("Chla gain: 1x")
             wiringpi.digitalWrite(TENX_PIN, 0)
@@ -89,41 +93,75 @@ def readchl(chlpin, chladc,chlslope, chlint, gain):
             print("Chla gain: 100x")
             wiringpi.digitalWrite(TENX_PIN, 0)
             wiringpi.digitalWrite(HUNDREDX_PIN, 1)
-             
+        
+        # Allow sensor to stabilize
         time.sleep(5)
-        #read data from ADC chip
-        #read data from ADC Chl 0
-        ADC_Chl=chladc
-        resp_cumulative = 0
-        n_resp = 0
+
+        # Initialize variables
+        n = 0
+        chl_raw_running_mean = 0
+        chl_raw_running_variance = 0
         t_sleep = 0.01
         start_time = time.time()
+
+        # Collect data for 3 seconds
         while time.time() - start_time < 3:
-            n_resp += 1
-            #debug
-            resp_individual = readadc(ADC_Chl,SPICLK,SPIMOSI,SPIMISO,SPICS)
-            print(resp_individual)
-            resp_cumulative += resp_individual
+            resp = readadc(chladc, SPICLK, SPIMOSI, SPIMISO, SPICS)
+            chl_raw = resp
+            n += 1
+
+            # Update running mean
+            delta = chl_raw - chl_raw_running_mean
+            chl_raw_running_mean += delta / n
+
+            # Update running variance (Welford's method)
+            chl_raw_running_variance += delta * (chl_raw - chl_raw_running_mean)
+            
             time.sleep(t_sleep)
-        resp= resp_cumulative/n_resp
-        # Format response from ADC chip
-        ChlRaw = resp
-        ChlVolts = (float(ChlRaw) / 4095) * 5
-        ChlCal = (ChlRaw * chlslope) + chlint 
-        
+
+        # Calculate standard deviation
+        if n > 1:
+            chl_raw_running_std_dev = math.sqrt(chl_raw_running_variance / (n - 1))
+        else:
+            chl_raw_running_std_dev = 0
+
+        # Calculate SEM and CI
+        chl_raw_sem = chl_raw_running_std_dev / math.sqrt(n)
+        chl_raw_ci_lower = chl_raw_running_mean - 1.96 * chl_raw_sem
+        chl_raw_ci_upper = chl_raw_running_mean + 1.96 * chl_raw_sem
+
+        # Calculate final values
+        ChlRaw = chl_raw_running_mean
+        ChlVolts = (ChlRaw / 4095) * 5
+        ChlCal = (ChlRaw * chlslope) + chlint
+        chl_raw_ci_range = chl_raw_ci_upper - chl_raw_ci_lower
+
+        chl_volts_ci_range = (chl_raw_ci_range / 4095) * 5
+        chl_volts_sem = (chl_raw_sem / 4095) * 5
+        chl_cal_ci_range = (chl_raw_ci_range * chlslope) + chlint
+        chl_cal_sem = (chl_raw_sem * chlslope) + chlint
+
+        # Print results
         print("ChlRaw is:", ChlRaw)
         print("ChlVolts is:", ChlVolts)
         print("ChlCal is:", ChlCal)
-        #turn off probe
+
+        # Turn off probe
         wiringpi.digitalWrite(chlpin, 1)
-        return ChlRaw, ChlVolts, ChlCal
-    except:
-        print('Read Chl Fail')
-        ChlRaw = 'Fail'
-        ChlVolts = 'Fail'
-        ChlCal = 'Fail'
+
+        return (ChlRaw, chl_raw_ci_range, chl_raw_sem, 
+                ChlVolts, chl_volts_ci_range, chl_volts_sem, 
+                ChlCal, chl_cal_ci_range, chl_cal_sem)
+
+    except Exception as e:
+        print(f"Read Chl Fail: {e}")
+        
+        # Turn off probe and reset pins
         wiringpi.digitalWrite(chlpin, 1)
-        return ChlRaw, ChlVolts, ChlCal
+        wiringpi.digitalWrite(TENX_PIN, 0)
+        wiringpi.digitalWrite(HUNDREDX_PIN, 0)
+
+        return ('Fail', 'Fail', 'Fail', 'Fail', 'Fail', 'Fail', 'Fail', 'Fail', 'Fail')
     
 def readcdom(cdompin, cdomadc,cdomslope, cdomint, cdomchlslope, cdomchlint):
     try:
