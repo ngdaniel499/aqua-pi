@@ -102,12 +102,14 @@ try:
         ChlRaw, ChlRaw_Range, ChlRaw_SEM, ChlVolts, ChlVolts_Range, ChlVolts_SEM, ChlVolts, ChlVolts_Range, ChlVolts_SEM = readchl(chlpin, chladc, chlslope, chlint, 10)
         ChlGain = '10x'
         if(ChlVolts < 0.3):
+            print('reading is less than 0.3V attempting 100X')
             ChlRaw, ChlRaw_Range, ChlRaw_SEM, ChlVolts, ChlVolts_Range, ChlVolts_SEM, ChlCal, ChlCal_Range, ChlCal_SEM = readchl(chlpin, chladc, chlslope, chlint, 100)
             ChlCal = ChlCal/10
             ChlCal_Range = ChlCal_Range/10
             ChlCal_SEM = ChlCal_SEM/10
             ChlGain = '100x'
-        elif(ChlVolts > 4.5):
+        elif(ChlVolts > 4):
+            print('reading is higher than 4V attempting 1X')
             ChlRaw, ChlRaw_Range, ChlRaw_SEM, ChlVolts, ChlVolts_Range, ChlVolts_SEM, ChlCal, ChlCal_Range, ChlCal_SEM = readchl(chlpin, chladc, chlslope, chlint, 1)
             ChlCal = ChlCal*10
             ChlCal_Range = ChlCal_Range*10
