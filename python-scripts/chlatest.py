@@ -92,7 +92,6 @@ def continuous_chl_monitor(config_file='Upconfig.cfg'):
         # Initial probe setup - turn it on once at the start
         wiringpi.pinMode(chlpin, 1)
         wiringpi.digitalWrite(chlpin, 0)
-        time.sleep(readinterval)  # Brief delay for sensor to stabilize
         
         t_sleep = 0.01
         wiringpi.digitalWrite(22, 0)
@@ -101,7 +100,7 @@ def continuous_chl_monitor(config_file='Upconfig.cfg'):
         running_mean = 0
         running_std_dev = 0
         n = 0
-        
+        time.sleep(5)
         while True:
             try:
                 # Read and print data

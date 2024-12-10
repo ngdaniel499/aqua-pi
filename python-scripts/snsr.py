@@ -24,13 +24,12 @@ SPIMISO=9
 SPIMOSI=10
 SPICS=8
 
-
-
 GPIO.setup(SPIMOSI,GPIO.OUT)
 GPIO.setup(SPIMISO,GPIO.IN)
 GPIO.setup(SPICLK, GPIO.OUT)
 GPIO.setup(SPICS,  GPIO.OUT)
-
+GPIO.setup(22, GPIO.OUT)
+GPIO.setup(27, GPIO.OUT)
 
 # function  to get data from specified pin of ADC
 def readadc(adcnum, clockpin, mosipin, misopin, cspin):
