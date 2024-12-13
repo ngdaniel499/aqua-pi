@@ -99,7 +99,7 @@ try:
 
         # Chl gain switching, start at 10x move to 100x if reading is too low, move to 1x if reading is too high
 
-        ChlRaw, ChlRaw_Range, ChlRaw_SEM, ChlVolts, ChlVolts_Range, ChlVolts_SEM, ChlVolts, ChlVolts_Range, ChlVolts_SEM = readchl(chlpin, chladc, chlslope, chlint, 10)
+        ChlRaw, ChlRaw_Range, ChlRaw_SEM, ChlVolts, ChlVolts_Range, ChlVolts_SEM, ChlCal, ChlCal_Range, ChlCal_SEM = readchl(chlpin, chladc, chlslope, chlint, 10)
         ChlGain = '10x'
         if(ChlVolts < 0.3):
             print('reading is less than 0.3V attempting 100X')
