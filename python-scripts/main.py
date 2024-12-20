@@ -68,8 +68,12 @@ try:
     chladc = config.getint('Section1', 'chladc')
     tempadc = config.getint('Section1', 'tempadc')
     #Get calibration constants
-    chlslope = config.getfloat('Section1', 'chlslope')
-    chlint = config.getfloat('Section1', 'chlint')
+    chlslope_1 = config.getfloat('Section1', 'chlslope_1')
+    chlint_1 = config.getfloat('Section1', 'chlint_1')
+    chlslope_10 = config.getfloat('Section1', 'chlslope_10')
+    chlint_10 = config.getfloat('Section1', 'chlint_10')
+    chlslope_100 = config.getfloat('Section1', 'chlslope_100')
+    chlint_100 = config.getfloat('Section1', 'chlint_100')        
     cdomslope = config.getfloat('Section1', 'cdomslope')
     cdomint = config.getfloat('Section1', 'cdomint')
     cdomchlslope = config.getfloat('Section1', 'cdomchlslope')
@@ -99,18 +103,18 @@ try:
 
         # Chl gain switching, start at 10x move to 100x if reading is too low, move to 1x if reading is too high
 
-        ChlRaw, ChlRaw_Range, ChlRaw_SEM, ChlVolts, ChlVolts_Range, ChlVolts_SEM, ChlCal, ChlCal_Range, ChlCal_SEM = readchl(chlpin, chladc, chlslope, chlint, 10)
+        ChlRaw, ChlRaw_Range, ChlRaw_SEM, ChlVolts, ChlVolts_Range, ChlVolts_SEM, ChlCal, ChlCal_Range, ChlCal_SEM = readchl(chlpin, chladc, chlslope_10, chlint_10, 10)
         ChlGain = '10x'
         if(ChlVolts < 0.3):
             print('reading is less than 0.3V attempting 100X')
-            ChlRaw, ChlRaw_Range, ChlRaw_SEM, ChlVolts, ChlVolts_Range, ChlVolts_SEM, ChlCal, ChlCal_Range, ChlCal_SEM = readchl(chlpin, chladc, chlslope, chlint, 100)
+            ChlRaw, ChlRaw_Range, ChlRaw_SEM, ChlVolts, ChlVolts_Range, ChlVolts_SEM, ChlCal, ChlCal_Range, ChlCal_SEM = readchl(chlpin, chladc, chlslope_100, chlint_100, 100)
             ChlCal = ChlCal/10
             ChlCal_Range = ChlCal_Range/10
             ChlCal_SEM = ChlCal_SEM/10
             ChlGain = '100x'
         elif(ChlVolts > 4):
             print('reading is higher than 4V attempting 1X')
-            ChlRaw, ChlRaw_Range, ChlRaw_SEM, ChlVolts, ChlVolts_Range, ChlVolts_SEM, ChlCal, ChlCal_Range, ChlCal_SEM = readchl(chlpin, chladc, chlslope, chlint, 1)
+            ChlRaw, ChlRaw_Range, ChlRaw_SEM, ChlVolts, ChlVolts_Range, ChlVolts_SEM, ChlCal, ChlCal_Range, ChlCal_SEM = readchl(chlpin, chladc, chlslope_1, chlint_1, 1)
             ChlCal = ChlCal*10
             ChlCal_Range = ChlCal_Range*10
             ChlCal_SEM = ChlCal_SEM*10

@@ -1,0 +1,12 @@
+Time,Probe_TempRaw,Probe_TempCal,Condraw,CondCal,SpCond,Salinity,ChlRaw,ChlRawRangeCI,ChlVolts,ChlVoltsRangeCI,ChlCal,ChlCalRangeCI,CDOMRaw,CDOMVolts,CDOMCal,CDOMChlEQ,ChlAdj,TempRaw,TempCal
+  File "/home/pi/aqua-pi/python-scripts/main.py", line 102, in <module>
+    ChlRaw, ChlRaw_Range, ChlRaw_SEM, ChlVolts, ChlVolts_Range, ChlVolts_SEM, ChlCal, ChlCal_Range, ChlCal_SEM = readchl(chlpin, chladc, chlslope, chlint, 10)
+                                                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   File "/home/pi/aqua-pi/python-scripts/main.py", line 102, in <module>
+    ChlRaw, ChlRaw_Range, ChlRaw_SEM, ChlVolts, ChlVolts_Range, ChlVolts_SEM, ChlCal, ChlCal_Range, ChlCal_SEM = readchl(chlpin, chladc, chlslope, chlint, 10)
+                                                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 13-12-2024 20:48:13,Fail,Fail,Fail,Fail,Fail,Fail,116.70464135021095,3.901641139825415,0.14249650958511714,0.004763908595635427,0.1753309145004219,0.005861620422149749,0,0.0,0.0,0.0,0.1753309145004219,12,-1.373731344
+13-12-2024 20:48:47,Fail,Fail,Fail,Fail,Fail,Fail,112.17793594306045,3.704766298031899,0.13696939675587358,0.004523524173421122,0.1685302304014234,0.005565846015455849,0,0.0,0.0,0.0,0.1685302304014234,7,-1.4763432840000001
+13-12-2024 20:49:20,Fail,Fail,Fail,Fail,Fail,Fail,115.65949820788529,4.529853079561036,0.14122038853221647,0.005530956141100166,0.17376074641792114,0.006805412996460517,0,0.0,0.0,0.0,0.17376074641792114,14,-1.3326865680000002
+13-12-2024 20:49:53,Fail,Fail,Fail,Fail,Fail,Fail,118.16304347826089,3.3804963278800244,0.1442772203641769,0.0041275901439316535,0.1775219411456522,0.005078679868900102,0,0.0,0.0,0.0,0.1775219411456522,3,-1.5584328360000002
+13-12-2024 20:50:26,Fail,Fail,Fail,Fail,Fail,Fail,113.86170212765963,3.9413028652917887,0.13902527732314973,0.004812335610856885,0.1710598321510639,0.0059212061122836685,0,0.0,0.0,0.0,0.1710598321510639,28,-1.0453731360000003

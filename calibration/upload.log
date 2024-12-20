@@ -1,0 +1,21 @@
+2024-10-21 21:11:59,890 - INFO - File Experiment1-AquaPi03-Treated_2024_10_21_21H.csv sent. Response: 200
+2024-10-21 21:11:59,892 - INFO - File Experiment1-AquaPi03-Treated_2024_10_21_21H.csv uploaded successfully.
+2024-10-21 21:11:59,897 - INFO - Uploaded 1 files. Kept Experiment1-AquaPi03-Treated_2024_10_21_21H.csv in 'data' directory.
+2024-10-21 22:37:28,301 - INFO - File Experiment1-AquaPi03-Treated_2024_10_21_22H.csv sent. Response: 200
+2024-10-21 22:37:28,303 - INFO - File Experiment1-AquaPi03-Treated_2024_10_21_22H.csv uploaded successfully.
+2024-10-21 22:37:28,308 - INFO - Uploaded 1 files. Kept Experiment1-AquaPi03-Treated_2024_10_21_22H.csv in 'data' directory.
+2024-10-21 22:52:27,074 - INFO - File Experiment1-AquaPi03-Treated_2024_10_21_22H.csv sent. Response: 200
+2024-10-21 22:52:27,077 - INFO - File Experiment1-AquaPi03-Treated_2024_10_21_22H.csv uploaded successfully.
+2024-10-21 22:52:27,081 - INFO - Uploaded 1 files. Kept Experiment1-AquaPi03-Treated_2024_10_21_22H.csv in 'data' directory.
+2024-10-21 22:53:26,817 - ERROR - Timeout error while uploading file Experiment1-AquaPi03-Treated_2024_10_21_22H.csv
+2024-10-21 22:53:26,819 - ERROR - Failed to upload any files.
+2024-10-21 22:54:25,149 - ERROR - Timeout error while uploading file Experiment1-AquaPi03-Treated_2024_10_21_22H.csv
+2024-10-21 22:54:25,151 - ERROR - Failed to upload any files.
+2024-10-21 22:55:24,999 - ERROR - Timeout error while uploading file Experiment1-AquaPi03-Treated_2024_10_21_22H.csv
+2024-10-21 22:55:25,001 - ERROR - Failed to upload any files.
+2024-10-21 22:56:23,429 - ERROR - Timeout error while uploading file Experiment1-AquaPi03-Treated_2024_10_21_22H.csv
+2024-10-21 22:56:23,431 - ERROR - Failed to upload any files.
+2024-10-21 22:57:23,253 - ERROR - Timeout error while uploading file Experiment1-AquaPi03-Treated_2024_10_21_22H.csv
+2024-10-21 22:57:23,255 - ERROR - Failed to upload any files.
+2024-10-21 22:58:21,660 - ERROR - Timeout error while uploading file Experiment1-AquaPi03-Treated_2024_10_21_22H.csv
+2024-10-21 22:58:21,662 - ERROR - Failed to upload any files.
