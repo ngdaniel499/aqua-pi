@@ -21,9 +21,9 @@ max_requests_jitter = 5
 # Preload application code before worker processes are forked
 preload_app = True
 
-# Logging
-errorlog = '/home/ubuntu/aqua-pi-webapp/logs/gunicorn-error.log'
-accesslog = '/home/ubuntu/aqua-pi-webapp/logs/gunicorn-access.log'
+# Logging. Change directory as needed
+errorlog = '/home/ngdan/aqua-pi/webserver/logs/gunicorn-error.log'
+accesslog = '/home/ngdan/aqua-pi/webserver/logs/gunicorn-access.log'
 loglevel = 'info'
 
 # Process naming
