@@ -17,7 +17,7 @@ app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'd2271438da7ed08956bafefc80a
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
-handler = RotatingFileHandler('app.log', maxBytes=1024 * 1024 * 10, backupCount=3)
+handler = RotatingFileHandler('logs/app.log', maxBytes=1024 * 1024 * 10, backupCount=3)
 handler.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
