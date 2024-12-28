@@ -392,25 +392,31 @@ def list_files():
             if graph_file:
                 files.insert(0, graph_file)
             
+            # Get the latest update time from either the graph file or the most recent data file
             last_updated = None
-            if graph_file:
-                graph_path = os.path.join(folder_path, graph_file)
-                last_updated = datetime.fromtimestamp(os.path.getmtime(graph_path)).strftime('%Y-%m-%d %H:%M:%S')
+            last_updated_timestamp = None
+            
+            if files:
+                # Check all files to find the most recent update
+                file_timestamps = []
+                for file in files:
+                    file_path = os.path.join(folder_path, file)
+                    file_timestamps.append(os.path.getmtime(file_path))
+                
+                if file_timestamps:
+                    last_updated_timestamp = max(file_timestamps)
+                    last_updated = datetime.fromtimestamp(last_updated_timestamp).strftime('%Y-%m-%d %H:%M:%S')
             
             folders.append({
                 'folder': foldername, 
                 'files': files,
-                'last_updated': last_updated
+                'last_updated': last_updated,
+                'last_updated_timestamp': last_updated_timestamp or 0  # Use 0 if no timestamp available
             })
     
-    # Sort folders alphabetically
-    folders.sort(key=lambda x: x['folder'])
-    
-    app.logger.debug(f"Found {len(folders)} folders")
-    return render_template('list_files.html', folders=folders)
-    
-    # Sort folders by the most recent file in each folder
-    folders.sort(key=lambda x: max([os.path.getmtime(os.path.join(app.config['UPLOAD_FOLDER'], x['folder'], f)) for f in x['files']]), reverse=True)
+    # Sort folders by last_updated_timestamp, putting most recent first
+    # Stations without updates (timestamp = 0) will appear at the bottom
+    folders.sort(key=lambda x: (-(x['last_updated_timestamp'] or 0), x['folder']))
     
     app.logger.debug(f"Found {len(folders)} folders")
     return render_template('list_files.html', folders=folders)
