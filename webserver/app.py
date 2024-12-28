@@ -372,6 +372,9 @@ def processing_status():
 def list_files():
     app.logger.info("Listing all files")
     folders = []
+    current_time = time.time()
+    archived_time_seconds = 21 * 24 * 60 * 60  # 21 days in seconds
+    
     for foldername in os.listdir(app.config['UPLOAD_FOLDER']):
         folder_path = os.path.join(app.config['UPLOAD_FOLDER'], foldername)
         if os.path.isdir(folder_path):
@@ -407,15 +410,19 @@ def list_files():
                     last_updated_timestamp = max(file_timestamps)
                     last_updated = datetime.fromtimestamp(last_updated_timestamp).strftime('%Y-%m-%d %H:%M:%S')
             
+            # Calculate age in seconds
+            age_in_seconds = current_time - (last_updated_timestamp or 0)
+            is_old = age_in_seconds > archived_time_seconds
+            
             folders.append({
                 'folder': foldername, 
                 'files': files,
                 'last_updated': last_updated,
-                'last_updated_timestamp': last_updated_timestamp or 0  # Use 0 if no timestamp available
+                'last_updated_timestamp': last_updated_timestamp or 0,
+                'is_old': is_old
             })
     
     # Sort folders by last_updated_timestamp, putting most recent first
-    # Stations without updates (timestamp = 0) will appear at the bottom
     folders.sort(key=lambda x: (-(x['last_updated_timestamp'] or 0), x['folder']))
     
     app.logger.debug(f"Found {len(folders)} folders")

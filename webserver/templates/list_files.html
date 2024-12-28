@@ -33,6 +33,46 @@
             display: block;
             margin: 20px 0;
         }
+        .archive-toggle {
+            width: 100%;
+            padding: 15px;
+            margin: 20px 0;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            color: #495057;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+        }
+        .archive-toggle:hover {
+            background-color: #e9ecef;
+        }
+        .archive-toggle .count {
+            background-color: #6c757d;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+        }
+        .archived-stations {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .archived-stations.show {
+            display: block;
+            opacity: 1;
+        }
+        .archive-toggle .icon {
+            transition: transform 0.3s ease;
+        }
+        .archive-toggle.active .icon {
+            transform: rotate(180deg);
+        }
         .collapsible {
             background-color: #3498db;
             color: white;
@@ -146,8 +186,6 @@
     </style>
 </head>
 <body>
-
-
     <h1>AquaPi Data Analysis</h1>
     
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -160,47 +198,92 @@
         {% endif %}
     {% endwith %}
     
-
-    
+    {# First display active stations #}
     {% for folder in folders %}
-        <div class="station">
-            <h2>Station: <a href="{{ url_for('station_detail', station_name=folder.folder) }}">{{ folder.folder }}</a></h2>
-            <h3>
-                {% if folder.last_updated %}
-                    Last Updated: {{ folder.last_updated }}
-                {% endif %}
-            </h3>
-            <div class="graph">
-                {% set graph_file = folder.folder + '_chlorophyll_analysis.png' %}
-                {% if graph_file in folder.files %}
-                    <img src="{{ url_for('download_file', folder=folder.folder, filename=graph_file) }}" alt="Chlorophyll Analysis for {{ folder.folder }}">
-                {% else %}
-                    <p>No analysis graph available for this station yet.</p>
-                {% endif %}
+        {% if not folder.is_old %}
+            <div class="station">
+                <h2>Station: <a href="{{ url_for('station_detail', station_name=folder.folder) }}">{{ folder.folder }}</a></h2>
+                <h3>
+                    {% if folder.last_updated %}
+                        Last Updated: {{ folder.last_updated }}
+                    {% endif %}
+                </h3>
+                <div class="graph">
+                    {% set graph_file = folder.folder + '_chlorophyll_analysis.png' %}
+                    {% if graph_file in folder.files %}
+                        <img src="{{ url_for('download_file', folder=folder.folder, filename=graph_file) }}" alt="Chlorophyll Analysis for {{ folder.folder }}">
+                    {% else %}
+                        <p>No analysis graph available for this station yet.</p>
+                    {% endif %}
+                </div>
+                <button class="collapsible">View Files</button>
+                <div class="content">
+                    <a href="{{ url_for('download_folder', folder=folder.folder) }}">Download All as ZIP</a>
+                    <ul>
+                        {% for filename in folder.files %}
+                            <li>
+                                <a href="{{ url_for('download_file', folder=folder.folder, filename=filename) }}">{{ filename }}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
             </div>
-            <button class="collapsible">View Files</button>
-            <div class="content">
-                <a href="{{ url_for('download_folder', folder=folder.folder) }}">Download All as ZIP</a>
-                <ul>
-                    {% for filename in folder.files %}
-                        <li>
-                            <a href="{{ url_for('download_file', folder=folder.folder, filename=filename) }}">{{ filename }}</a>
-                        </li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
+        {% endif %}
     {% endfor %}
+
+    {# Count old stations #}
+    {% set old_stations = folders|selectattr('is_old')|list %}
+    {% if old_stations %}
+        <button class="archive-toggle" onclick="toggleArchive()">
+            <span>Show Archived Stations</span>
+            <span class="count">{{ old_stations|length }}</span>
+            <span class="icon">▼</span>
+        </button>
+
+        <div class="archived-stations">
+            {% for folder in folders %}
+                {% if folder.is_old %}
+                    <div class="station">
+                        <h2>Station: <a href="{{ url_for('station_detail', station_name=folder.folder) }}">{{ folder.folder }}</a></h2>
+                        <h3>
+                            {% if folder.last_updated %}
+                                Last Updated: {{ folder.last_updated }}
+                            {% endif %}
+                        </h3>
+                        <div class="graph">
+                            {% set graph_file = folder.folder + '_chlorophyll_analysis.png' %}
+                            {% if graph_file in folder.files %}
+                                <img src="{{ url_for('download_file', folder=folder.folder, filename=graph_file) }}" alt="Chlorophyll Analysis for {{ folder.folder }}">
+                            {% else %}
+                                <p>No analysis graph available for this station yet.</p>
+                            {% endif %}
+                        </div>
+                        <button class="collapsible">View Files</button>
+                        <div class="content">
+                            <a href="{{ url_for('download_folder', folder=folder.folder) }}">Download All as ZIP</a>
+                            <ul>
+                                {% for filename in folder.files %}
+                                    <li>
+                                        <a href="{{ url_for('download_file', folder=folder.folder, filename=filename) }}">{{ filename }}</a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% endif %}
+    
     <form action="{{ url_for('regenerate_graphs') }}" method="post">
         <button type="submit" class="regenerate-btn">debug: Regenerate All Graphs</button>
     </form>
     <p class="debug-note">Note: This is a maintenance function. Not typically required</p>
 
     <script>
+        // Your existing collapsible script for file lists
         var coll = document.getElementsByClassName("collapsible");
-        var i;
-
-        for (i = 0; i < coll.length; i++) {
+        for (var i = 0; i < coll.length; i++) {
             coll[i].addEventListener("click", function() {
                 this.classList.toggle("active");
                 var content = this.nextElementSibling;
@@ -210,6 +293,22 @@
                     content.style.display = "block";
                 }
             });
+        }
+
+        // New script for archive toggle
+        function toggleArchive() {
+            const archiveSection = document.querySelector('.archived-stations');
+            const toggleButton = document.querySelector('.archive-toggle');
+            const buttonText = toggleButton.querySelector('span');
+            
+            archiveSection.classList.toggle('show');
+            toggleButton.classList.toggle('active');
+            
+            if (archiveSection.classList.contains('show')) {
+                buttonText.textContent = 'Hide Archived Stations';
+            } else {
+                buttonText.textContent = 'Show Archived Stations';
+            }
         }
     </script>
 </body>
