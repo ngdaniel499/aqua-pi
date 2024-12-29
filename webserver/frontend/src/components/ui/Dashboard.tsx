@@ -9,7 +9,8 @@ import {
   CartesianGrid, 
   Tooltip, 
   Legend,
-  ResponsiveContainer 
+  ResponsiveContainer,
+  Brush 
 } from 'recharts';
 
 // Define types for the measurement data
@@ -25,36 +26,35 @@ interface Measurement {
   ChlRaw: number;
   ChlCal: number;
   ChlAdj: number;
-  [key: string]: string | number; // Allow for dynamic keys
+  ChlVolts: number;
+  [key: string]: string | number;
 }
 
-// Define type for processed measurement with timestamp
 interface ProcessedMeasurement extends Omit<Measurement, 'Time'> {
   Time: number;
 }
 
-// Define type for the data structure
 interface DataStructure {
   [station: string]: ProcessedMeasurement[];
 }
 
-// Define type for combined data point
 interface CombinedDataPoint {
   Time: number;
   [key: string]: number | null;
 }
 
 const availableVariables = [
-  { id: 'Probe_TempCal', label: 'Temperature (Calibrated)' },
-  { id: 'Condraw', label: 'Conductivity (Raw)' },
-  { id: 'CondCal', label: 'Conductivity (Calibrated)' },
-  { id: 'SpCond', label: 'Specific Conductivity' },
-  { id: 'Salinity', label: 'Salinity' },
-  { id: 'TurbRaw', label: 'Turbidity (Raw)' },
-  { id: 'TurbCal', label: 'Turbidity (Calibrated)' },
-  { id: 'ChlRaw', label: 'Chlorophyll (Raw)' },
-  { id: 'ChlCal', label: 'Chlorophyll (Calibrated)' },
-  { id: 'ChlAdj', label: 'Chlorophyll (Adjusted)' }
+  //{ id: 'Probe_TempCal', label: 'Temperature (Calibrated)' },
+  //{ id: 'Condraw', label: 'Conductivity (Raw)' },
+  //{ id: 'CondCal', label: 'Conductivity (Calibrated)' },
+  //{ id: 'SpCond', label: 'Specific Conductivity' },
+  //{ id: 'Salinity', label: 'Salinity' },
+  //{ id: 'TurbRaw', label: 'Turbidity Raw' },
+ // { id: 'TurbCal', label: 'Turbidity (Calibrated)' },
+  { id: 'ChlRaw', label: 'Chlorophyll Raw' },
+  { id: 'ChlCal', label: 'Chlorophyll Calibrated (µg/L)' },
+  //{ id: 'ChlAdj', label: 'Chlorophyll Adjusted (µg/L)' },
+  { id: 'ChlVolts', label: 'Chlorophyll Voltage (V)' }
 ] as const;
 
 const colors = [
@@ -65,7 +65,7 @@ const colors = [
 const formatXAxis = (tickItem: number): string => {
   if (!tickItem) return '';
   const date = new Date(tickItem);
-  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return date.toLocaleDateString() + '\n' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
 const Dashboard: React.FC = () => {
@@ -80,7 +80,6 @@ const Dashboard: React.FC = () => {
         const response = await fetch('/api/data');
         const jsonData: { [key: string]: Measurement[] } = await response.json();
         
-        // Convert all Time strings to Date objects
         const processedData = Object.fromEntries(
           Object.entries(jsonData).map(([station, measurements]) => [
             station,
@@ -102,11 +101,10 @@ const Dashboard: React.FC = () => {
     fetchData();
   }, []);
 
-  // Create a time-aligned dataset with all stations' data
-  const combinedData = React.useMemo(() => {
-    if (!selectedVariables.length || !selectedStations.length) return [];
+  // Create separate combined datasets for each variable
+  const getCombinedDataForVariable = (variable: string) => {
+    if (!selectedStations.length) return [];
 
-    // Get all unique timestamps
     const allTimestamps = new Set<number>();
     selectedStations.forEach(station => {
       if (data[station]) {
@@ -116,7 +114,6 @@ const Dashboard: React.FC = () => {
       }
     });
 
-    // Create aligned data points
     return Array.from(allTimestamps)
       .sort((a, b) => a - b)
       .map(timestamp => {
@@ -124,14 +121,14 @@ const Dashboard: React.FC = () => {
         selectedStations.forEach(station => {
           const stationData = data[station]?.find(d => d.Time === timestamp);
           if (stationData) {
-            selectedVariables.forEach(variable => {
-              point[`${station}`] = stationData[variable] as number;
-            });
+            point[`${station}`] = stationData[variable] as number;
+          } else {
+            point[`${station}`] = null;
           }
         });
         return point;
       });
-  }, [data, selectedStations, selectedVariables]);
+  };
 
   if (isLoading) {
     return (
@@ -143,15 +140,15 @@ const Dashboard: React.FC = () => {
 
   const renderCharts = () => {
     return selectedVariables.map(variable => (
-      <Card key={variable} className="w-full h-[400px] mb-6">
+      <Card key={variable} className="w-full h-[500px] mb-6">
         <CardHeader>
           <CardTitle>
             {availableVariables.find(v => v.id === variable)?.label}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={combinedData}>
+          <ResponsiveContainer width="100%" height={450}>
+            <LineChart data={getCombinedDataForVariable(variable)} margin={{ top: 5, right: 30, left: 20, bottom: 70 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis 
                 dataKey="Time"
@@ -162,7 +159,11 @@ const Dashboard: React.FC = () => {
                 tick={{ fontSize: 12 }}
                 angle={-45}
                 textAnchor="end"
+                height={100}
+                interval="preserveStartEnd"
+                
               />
+              <Brush dataKey="Time" height={15} tickFormatter={() => ''} stroke="#8884d8" />
               <YAxis />
               <Tooltip 
                 labelFormatter={formatXAxis}
@@ -175,7 +176,7 @@ const Dashboard: React.FC = () => {
                   dataKey={station}
                   name={station}
                   stroke={colors[index % colors.length]}
-                  dot={false}
+                  dot={{ r: 1, fill: colors[index % colors.length], strokeWidth: 1 }}
                   connectNulls
                 />
               ))}
@@ -190,7 +191,7 @@ const Dashboard: React.FC = () => {
     <div className="p-4 max-w-[1400px] mx-auto">
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>AquaPi Water Quality Dashboard</CardTitle>
+          <CardTitle>AquaPi Dashboard</CardTitle>
         </CardHeader>
       </Card>
 
