@@ -1,21 +1,23 @@
+from flask import Flask, request, redirect, url_for, render_template, send_from_directory, make_response, jsonify, flash, session
+from flask_cors import CORS
 import os
-import zipfile
-import glob
 import pandas as pd
 import numpy as np
-import time
 from datetime import datetime, timedelta
-from threading import Timer
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-from flask import Flask, request, redirect, url_for, render_template, send_from_directory, make_response, jsonify, flash, session
 import logging
 from logging.handlers import RotatingFileHandler
+import zipfile
+import glob
+import time
+from threading import Timer
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'd2271438da7ed08956bafefc80a475fc4c37d6f0bbb3747e617e52d6acfd1c04')
 
 # Set up logging
+if not os.path.exists('logs'):
+    os.makedirs('logs')
 logging.basicConfig(level=logging.DEBUG)
 handler = RotatingFileHandler('logs/app.log', maxBytes=1024 * 1024 * 10, backupCount=3)
 handler.setLevel(logging.DEBUG)
@@ -28,6 +30,31 @@ last_upload_time = 0
 batch_delay = 5  # seconds to wait for more uploads
 processing_timer = None
 
+#front end comm
+
+@app.route('/api/data')
+def get_data():
+    data = {}
+    for foldername in os.listdir(app.config['UPLOAD_FOLDER']):
+        folder_path = os.path.join(app.config['UPLOAD_FOLDER'], foldername)
+        if os.path.isdir(folder_path):
+            station_data = []
+            csv_files = glob.glob(os.path.join(folder_path, '*.csv'))
+            
+            for file_path in csv_files:
+                try:
+                    df = pd.read_csv(file_path)
+                    df['Time'] = pd.to_datetime(df['Time'], format='%d-%m-%Y %H:%M:%S').dt.strftime('%Y-%m-%d %H:%M:%S')
+                    station_data.extend(df.to_dict('records'))
+                except Exception as e:
+                    app.logger.error(f"Error reading file {file_path}: {str(e)}")
+                    continue
+            
+            if station_data:
+                data[foldername] = sorted(station_data, key=lambda x: x['Time'])
+    
+    return jsonify(data)
+    
 def process_uploads(folder):
     global processing_timer
     processing_timer = None
@@ -465,4 +492,4 @@ def download_folder(folder):
 
 if __name__ == '__main__':
     app.logger.info("Starting Flask application")
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=True)
