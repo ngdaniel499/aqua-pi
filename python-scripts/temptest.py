@@ -27,8 +27,7 @@ GPIO.setup(SPIMISO, GPIO.IN)
 GPIO.setup(SPICLK, GPIO.OUT)
 GPIO.setup(SPICS, GPIO.OUT)
 
-GPIO.setup(22, GPIO.OUT) #10x pin
-GPIO.setup(27, GPIO.OUT) #100x
+
 
 def readadc(adcnum, clockpin, mosipin, misopin, cspin):
     if ((adcnum > 7) or (adcnum < 0)):
@@ -62,9 +61,9 @@ def readadc(adcnum, clockpin, mosipin, misopin, cspin):
     adcout >>= 1
     return adcout
 
-def continuous_chl_monitor(config_file='Upconfig.cfg'):
+def continuous_temp_monitor(config_file='Upconfig.cfg'):
     """
-    Continuously monitor chlorophyll sensor readings using configuration from file
+    Continuously monitor temp sensor readings using configuration from file
     
     Parameters:
     config_file: Path to configuration file (default 'Upconfig.cfg')
@@ -77,26 +76,24 @@ def continuous_chl_monitor(config_file='Upconfig.cfg'):
         config.read(configfilewithpath)
 
         # Get configuration values
-        chlpin = config.getint('Section1', 'chlpin')
-        chladc = config.getint('Section1', 'chladc')
-        chlslope = config.getfloat('Section1', 'chlslope_100')
-        chlint = config.getfloat('Section1', 'chlint_100')
+        temppin = config.getint('Section1', 'temppin')
         readinterval = config.getfloat('Section1', 'readinterval')
+        Probe_tempslope = config.getfloat('Section1', 'Probe_tempslope')
+        Probe_tempint = config.getfloat('Section1', 'Probe_tempint')    
+        tempadc = config.getint('Section1', 'tempadc')
 
-        print("Starting continuous chlorophyll monitoring...")
+        print("Starting continuous temperature monitoring...")
         print(f"Using configuration from: {config_file}")
-        print(f"Pin: {chlpin}, ADC: {chladc}, Slope: {chlslope}, Intercept: {chlint}")
+        print(f"Pin: {temppin}, ADC: {tempadc}, Slope: {Probe_tempslope}, Intercept: {Probe_tempint}")
         print("\nTimestamp               Raw     Volts    Calibrated")
         print("-" * 50)
         
         # Initial probe setup - turn it on once at the start
-        wiringpi.pinMode(chlpin, 1)
-        wiringpi.digitalWrite(chlpin, 0)
+        wiringpi.pinMode(temppin, 1)
+        wiringpi.digitalWrite(temppin, 1)
         
         t_sleep = 0.01
-        wiringpi.digitalWrite(22, 0)
-        wiringpi.digitalWrite(27, 1)
-        
+
         running_mean = 0
         running_std_dev = 0
         n = 0
@@ -104,21 +101,21 @@ def continuous_chl_monitor(config_file='Upconfig.cfg'):
         while True:
             try:
                 # Read and print data
-                resp = readadc(chladc, SPICLK, SPIMOSI, SPIMISO, SPICS)
+                resp = readadc(tempadc, SPICLK, SPIMOSI, SPIMISO, SPICS)
 
-                chl_raw = resp
-                chl_volts = (float(chl_raw) / 4095) * 5.0
-                chl_cal = (chl_raw * chlslope) + chlint
+                temp_raw = resp
+                temp_volts = (float(temp_raw) / 4095) * 5.0
+                temp_cal = (temp_raw * Probe_tempslope) + Probe_tempint
                 timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
 
                 # Update sample count
                 n += 1
                 
                 # Running mean calculation
-                running_mean += (chl_cal - running_mean) / n
+                running_mean += (temp_cal - running_mean) / n
                 
                 # Running standard deviation calculation
-                running_std_dev += (chl_cal - running_mean) * (chl_cal - running_mean - running_std_dev) / n
+                running_std_dev += (temp_cal - running_mean) * (temp_cal - running_mean - running_std_dev) / n
                 
                 # Calculate the standard error of the mean (SEM)
                 sem = running_std_dev / math.sqrt(n)
@@ -128,7 +125,7 @@ def continuous_chl_monitor(config_file='Upconfig.cfg'):
                 ci_upper = running_mean + 1.96 * sem
                 
                 # Print the data with running average and confidence interval
-                print(f"{timestamp}  {chl_raw:6d}  {chl_volts:8.3f}  {chl_cal:10.3f}   "
+                print(f"{timestamp}  {temp_raw:6d}  {temp_volts:8.3f}  {temp_cal:10.3f}   "
                     f"Running Mean: {running_mean:10.3f}  SEM: {sem:10.3f}  "
                     f"CI: ({ci_lower:10.3f}, {ci_upper:10.3f})")
 
@@ -143,7 +140,7 @@ def continuous_chl_monitor(config_file='Upconfig.cfg'):
     except KeyboardInterrupt:
         print("\nMonitoring stopped by user")
         # Ensure probe is turned off
-        wiringpi.digitalWrite(chlpin, 1)
+        wiringpi.digitalWrite(temppin, 1)
         wiringpi.digitalWrite(22, 0)
         wiringpi.digitalWrite(27, 0)
         GPIO.cleanup()
@@ -152,12 +149,12 @@ def continuous_chl_monitor(config_file='Upconfig.cfg'):
         tbinfo = traceback.format_tb(tb)[0]
         error_msg = tbinfo + " " + str(sys.exc_info()[1])
         print(f"Fatal error: {error_msg}")
-        wiringpi.digitalWrite(chlpin, 1)  # Make sure to turn off probe on error
+        wiringpi.digitalWrite(temppin, 1)  # Make sure to turn off probe on error
         GPIO.cleanup()
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         config_file = sys.argv[1]
-        continuous_chl_monitor(config_file)
+        continuous_temp_monitor(config_file)
     else:
-        continuous_chl_monitor()
+        continuous_temp_monitor()

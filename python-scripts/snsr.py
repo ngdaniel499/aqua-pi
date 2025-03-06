@@ -5,7 +5,7 @@ import datetime
 
 import sys
 import serial
-
+from serial.tools import list_ports
 import traceback
 import math
 import spidev
@@ -221,7 +221,7 @@ def readtemp(temppin, tempadc,tempslope, tempint):
         TempCal = 'Fail'
         wiringpi.digitalWrite(temppin, 0)
         return TempRaw, TempVolts, TempCal
-    
+
 def readturb(turbID, turbslope, turbint):
     try:
 #    for x in range(0,1):
@@ -263,6 +263,164 @@ def readturb(turbID, turbslope, turbint):
         TurbCal = 'Fail'
         TurbManu = 'Fail'
         return TurbRaw, TurbCal, TurbManu
+
+
+def check_serial_ports():
+    """Check available serial ports and their details"""
+    print("\nDEBUG: Checking available serial ports:")
+    ports = list_ports.comports()
+    if not ports:
+        print("DEBUG: No serial ports found!")
+        return
+    
+    for port in ports:
+        print(f"DEBUG: Found port: {port.device}")
+        print(f"    Description: {port.description}")
+        print(f"    Hardware ID: {port.hwid}")
+
+def readcond(condpin, condID, conda, condb, condc, condd, tempslope, tempint):
+    """
+    Read temperature and conductivity from sensor with enhanced serial debugging
+    """
+    port = None
+    try:
+        print(f"\nDEBUG: Setting up pin {condpin}")
+        wiringpi.pinMode(condpin, 1)
+        wiringpi.digitalWrite(condpin, 0)
+        print("DEBUG: Set pin low, waiting 5 seconds for sensor power-up")
+        time.sleep(5)
+        
+        # Check available serial ports
+        check_serial_ports()
+        
+        print("\nDEBUG: Attempting to open /dev/ttyUSB0")
+        try:
+            port = serial.Serial("/dev/ttyUSB0", baudrate=4800, bytesize=8, 
+                               parity='N', stopbits=1, xonxoff=0, rtscts=0, timeout=10)
+            print(f"DEBUG: Serial port opened successfully")
+            print(f"DEBUG: Port settings:")
+            print(f"    Baudrate: {port.baudrate}")
+            print(f"    Port name: {port.name}")
+            print(f"    Timeout: {port.timeout}")
+            print(f"    Is open: {port.is_open}")
+        except serial.SerialException as e:
+            print(f"ERROR: Failed to open serial port: {str(e)}")
+            raise
+        
+        # Wake up odyssey sensor
+        response = b""
+        trycount = 0
+        while response != b"Hi!" and trycount < 3:
+            print(f"\nDEBUG: Attempting sensor wake up, try {trycount + 1}")
+            port.flushInput()
+            port.flushOutput()
+            
+            # Send wake-up byte and verify it was sent
+            wake_byte = bytes([0x01])
+            bytes_written = port.write(wake_byte)
+            print(f"DEBUG: Wrote {bytes_written} byte(s): 0x01")
+            
+            # Wait briefly for the write to complete
+            port.flush()
+            
+            # Try to read response with explicit timeout
+            print("DEBUG: Waiting for response...")
+            response = port.read(3)
+            print(f"DEBUG: Response received: {response} (length: {len(response)})")
+            print(f"DEBUG: Response in hex: {response.hex() if response else 'empty'}")
+            
+            if not response:
+                print("DEBUG: No response received within timeout period")
+            
+            trycount += 1
+            
+            if trycount < 3 and response != b"Hi!":
+                print("DEBUG: Incorrect response, waiting 1 second before retry")
+                time.sleep(1)
+        
+        if response != b"Hi!":
+            raise Exception(f"Failed to wake up sensor after {trycount} attempts")
+        
+        print("\nDEBUG: Sensor wake-up successful, starting trace mode")
+        time.sleep(1)
+        port.flushOutput()
+        port.flushInput()
+        
+        trace_bytes = [bytes([0x54]), bytes([0x1a])]
+        for b in trace_bytes:
+            bytes_written = port.write(b)
+            print(f"DEBUG: Wrote trace byte: {b.hex()} ({bytes_written} bytes)")
+            port.flush()
+
+        print("\nDEBUG: Reading sensor data")
+        data = port.read(4)
+        print(f"DEBUG: Read {len(data)} bytes: {data.hex() if data else 'empty'}")
+        
+        if len(data) != 4:
+            raise Exception(f"Expected 4 bytes of data, got {len(data)}")
+        
+        print(f"DEBUG: Raw data received: {list(data)}")
+        
+        # Calculate values - data is already bytes in Python 3
+        TempRaw = data[0] + data[1]*256
+        CondRaw = data[2] + data[3]*256
+        
+        print(f"DEBUG: Raw values - Temp: {TempRaw}, Cond: {CondRaw}")
+        
+        # Perform Calibrations
+        TempCal = (TempRaw*tempslope) + tempint
+        CondCal = (CondRaw**3)*conda + (CondRaw**2)*condb + CondRaw*condc + condd    
+        
+        print(f"DEBUG: Calibrated values - Temp: {TempCal}, Cond: {CondCal}")
+        
+        # Calculate SpCond and Salinity
+        SpCond = CondCal/(1+0.0191*(TempCal-25))
+        R = SpCond/53087
+        k1, k2, k3, k4, k5, k6 = 0.0120, -0.2174, 25.3283, 13.7714, -6.4778, 2.5842
+        Salinity = k1 + (k2*R**(1/2)) + (k3*R) + (k4*R**(3/2)) + (k5*R**2) + (k6*R**(5/2))
+        
+        print(f"DEBUG: Calculated values - SpCond: {SpCond}, Salinity: {Salinity}")
+        
+        # End trace mode
+        print("DEBUG: Ending trace mode")
+        response = b"No"
+        while response != b"Hi!":
+            port.flushInput()
+            port.flushOutput()
+            for count in range(0, 256):
+                port.write(bytes([0x01]))
+            response = port.read(3)
+            
+        wiringpi.digitalWrite(condpin, 1)    
+        return TempRaw, CondRaw, TempCal, CondCal, SpCond, Salinity
+        
+    except Exception as e:
+        print("\nERROR: Sensor read failed")
+        print(f"ERROR: {str(e)}")
+        print(f"ERROR: Full traceback:")
+        print(traceback.format_exc())
+        
+        if port:
+            try:
+                port.close()
+                print("DEBUG: Closed serial port")
+            except:
+                print("ERROR: Failed to close serial port")
+                print(traceback.format_exc())
+        
+        wiringpi.digitalWrite(condpin, 1)
+        return 'Fail', 'Fail', 'Fail', 'Fail', 'Fail', 'Fail'
+    
+    finally:
+        if port and port.is_open:
+            try:
+                port.close()
+                print("DEBUG: Closed serial port")
+            except:
+                print("ERROR: Failed to close serial port in finally block")
+                print(traceback.format_exc())
+
+"""
 def readcond(condpin, condID, conda, condb, condc, condd, tempslope, tempint):
     try:
         wiringpi.pinMode(condpin, 1)
@@ -334,3 +492,4 @@ def readcond(condpin, condID, conda, condb, condc, condd, tempslope, tempint):
         Salinity = 'Fail'
         wiringpi.digitalWrite(condpin, 1)
         return TempRaw, CondRaw, TempCal, CondCal, SpCond, Salinity
+"""
