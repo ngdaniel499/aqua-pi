@@ -147,7 +147,7 @@ try:
         #print('CDOM Chl EQ', CDOMChlEQ)
         #print('Chl Adjusted', ChlAdj)
         print('Tempraw', TempRaw)
-        print('TempCal', TempCal)
+        print('TempCal', TempCal, '+-', TempCal_Range)
         sys.stdout.flush()
 
         # Write results to file
