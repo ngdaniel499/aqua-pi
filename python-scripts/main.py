@@ -42,7 +42,7 @@ def open_outputfile(fpath, stationid):
         f = open(fpathf, 'a')
     else:
         f = open(fpathf, 'w')
-        headerline = 'Time,Probe_TempRaw,Probe_TempCal,Condraw,CondCal,SpCond,Salinity,ChlRaw,ChlRawRangeCI,ChlVolts,ChlVoltsRangeCI,ChlCal,ChlCalRangeCI,CDOMRaw,CDOMVolts,CDOMCal,CDOMChlEQ,ChlAdj,TempRaw,TempCal'
+        headerline = 'Time,ChlGain,ChlRaw,ChlRawRangeCI,ChlVolts,ChlVoltsRangeCI,ChlCal,ChlCalRangeCI,CDOMRaw,CDOMVolts,CDOMCal,TempRaw,TempCal'
         f.write(str(headerline))
         f.write('\n')
     return f, outfile, fpathf
@@ -99,7 +99,7 @@ try:
         # Conduct Measurements
 
         # Temperature / conductivity
-        Probe_TempRaw, CondRaw, Probe_TempCal, CondCal, SpCond, Salinity = readcond(condpin, 'USB0', conda, condb, condc, condd, Probe_tempslope, Probe_tempint)
+        #Probe_TempRaw, CondRaw, Probe_TempCal, CondCal, SpCond, Salinity = readcond(condpin, 'USB0', conda, condb, condc, condd, Probe_tempslope, Probe_tempint)
 
         # Chl gain switching, start at 10x move to 100x if reading is too low, move to 1x if reading is too high
 
@@ -131,12 +131,12 @@ try:
         
         #time.sleep(5)
         # For testing print results to screen
-        print('Probe_Tempraw', Probe_TempRaw)
-        print('Condraw', CondRaw)
-        print('Probe_TempCal', Probe_TempCal)
-        print('CondCal', CondCal)
-        print('SpCond', SpCond)
-        print('Salinity', Salinity)
+        #print('Probe_Tempraw', Probe_TempRaw)
+        #print('Condraw', CondRaw)
+        #print('Probe_TempCal', Probe_TempCal)
+        #print('CondCal', CondCal)
+        #print('SpCond', SpCond)
+        #print('Salinity', Salinity)
         print('ChlGain', ChlGain)
         print('ChlRaw', ChlRaw, '+-', ChlRaw_Range)
         print('ChlVolts', ChlVolts, '+-', ChlVolts_Range)
@@ -144,14 +144,14 @@ try:
         print('CDOMRaw', CDOMRaw)
         print('CDOMVolts', CDOMVolts)
         print('CDOMCal', CDOMCal)
-        print('CDOM Chl EQ', CDOMChlEQ)
-        print('Chl Adjusted', ChlAdj)
+        #print('CDOM Chl EQ', CDOMChlEQ)
+        #print('Chl Adjusted', ChlAdj)
         print('Tempraw', TempRaw)
         print('TempCal', TempCal)
         sys.stdout.flush()
 
         # Write results to file
-        r = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s' % (time.strftime("%d-%m-%Y %H:%M:%S"), Probe_TempRaw, Probe_TempCal, CondRaw, CondCal, SpCond, Salinity, ChlRaw, ChlRaw_Range, ChlVolts, ChlVolts_Range, ChlCal, ChlCal_Range, CDOMRaw, CDOMVolts, CDOMCal, CDOMChlEQ, ChlAdj, TempRaw, TempCal)
+        r = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s' % (time.strftime("%d-%m-%Y %H:%M:%S"), ChlGain, ChlRaw, ChlRaw_Range, ChlVolts, ChlVolts_Range, ChlCal, ChlCal_Range, CDOMRaw, CDOMVolts, CDOMCal, TempRaw, TempCal)
         f.write(str(r))
         f.write('\n')
         f.close()
