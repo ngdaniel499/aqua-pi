@@ -85,7 +85,7 @@ def continuous_temp_monitor(config_file='Upconfig.cfg'):
         print("Starting continuous temperature monitoring...")
         print(f"Using configuration from: {config_file}")
         print(f"Pin: {temppin}, ADC: {tempadc}, Slope: {Probe_tempslope}, Intercept: {Probe_tempint}")
-        print("\nTimestamp               Raw     Volts    Calibrated")
+#old        print("\nTimestamp               Raw     Volts    Calibrated")
         print("-" * 50)
         
         # Initial probe setup - turn it on once at the start
@@ -98,7 +98,7 @@ def continuous_temp_monitor(config_file='Upconfig.cfg'):
         running_std_dev = 0
         n = 0
         time.sleep(5)
-        while True:
+        while n<500:
             try:
                 # Read and print data
                 resp = readadc(tempadc, SPICLK, SPIMOSI, SPIMISO, SPICS)
@@ -112,11 +112,11 @@ def continuous_temp_monitor(config_file='Upconfig.cfg'):
                 n += 1
                 
                 # Running mean calculation
-                running_mean += (temp_cal - running_mean) / n
-                
+                #running_mean += (temp_cal - running_mean) / n
+                running_mean += (temp_raw-running_mean) / n
                 # Running standard deviation calculation
-                running_std_dev += (temp_cal - running_mean) * (temp_cal - running_mean - running_std_dev) / n
-                
+                #running_std_dev += (temp_cal - running_mean) * (temp_cal - running_mean - running_std_dev) / n
+                running_std_dev += (temp_raw - running_mean) * (temp_raw - running_mean - running_std_dev) / n
                 # Calculate the standard error of the mean (SEM)
                 sem = running_std_dev / math.sqrt(n)
                 
@@ -125,9 +125,9 @@ def continuous_temp_monitor(config_file='Upconfig.cfg'):
                 ci_upper = running_mean + 1.96 * sem
                 
                 # Print the data with running average and confidence interval
-                print(f"{timestamp}  {temp_raw:6d}  {temp_volts:8.3f}  {temp_cal:10.3f}   "
-                    f"Running Mean: {running_mean:10.3f}  SEM: {sem:10.3f}  "
-                    f"CI: ({ci_lower:10.3f}, {ci_upper:10.3f})")
+                print(f"{timestamp}|Raw:{temp_raw:1d}|Volts:{temp_volts:1.2f}|cal:{temp_cal:1.2f}"
+                    f"|Mean:{running_mean:1.3f}|SEM:{sem:1.1f}"
+                    f"|CI: ({ci_lower:1.1f}, {ci_upper:1.1f})")
 
                 time.sleep(t_sleep)
                 
