@@ -93,7 +93,7 @@ def continuous_temp_monitor(config_file='Upconfig.cfg'):
         wiringpi.digitalWrite(temppin, 1)
         
         t_sleep = 0.01
-
+        running_variance = 0
         running_mean = 0
         running_std_dev = 0
         n = 0
@@ -115,9 +115,11 @@ def continuous_temp_monitor(config_file='Upconfig.cfg'):
                 #running_mean += (temp_cal - running_mean) / n
                 running_mean += (temp_raw-running_mean) / n
                 # Running standard deviation calculation
-                #running_std_dev += (temp_cal - running_mean) * (temp_cal - running_mean - running_std_dev) / n
-                running_std_dev += (temp_raw - running_mean) * (temp_raw - running_mean - running_std_dev) / n
+                #running_std_dev += (temp_cal - running_mean) * (temp_cal - running_mean - running_std_dev) / 
                 # Calculate the standard error of the mean (SEM)
+                running_variance += (temp_raw - running_mean) * (temp_raw - running_mean) / n
+                running_std_dev = math.sqrt(running_variance)
+
                 sem = running_std_dev / math.sqrt(n)
                 
                 # 95% Confidence Interval (1.96 * SEM for 95% confidence)
@@ -125,7 +127,7 @@ def continuous_temp_monitor(config_file='Upconfig.cfg'):
                 ci_upper = running_mean + 1.96 * sem
                 
                 # Print the data with running average and confidence interval
-                print(f"{timestamp}|Raw:{temp_raw:1d}|Volts:{temp_volts:1.2f}|cal:{temp_cal:1.2f}"
+                print(f"{n}|{timestamp}|Raw:{temp_raw:1d}|Volts:{temp_volts:1.2f}|cal:{temp_cal:1.2f}"
                     f"|Mean:{running_mean:1.3f}|SEM:{sem:1.1f}"
                     f"|CI: ({ci_lower:1.1f}, {ci_upper:1.1f})")
 
