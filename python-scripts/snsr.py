@@ -211,7 +211,7 @@ def readtemp(temppin, tempadc, tempslope, tempint):
         timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
         
         # Sample loop
-        while n < 500:
+        while n < 1000:
             # Read data from ADC
             temp_raw = readadc(tempadc, SPICLK, SPIMOSI, SPIMISO, SPICS)
             
@@ -222,8 +222,9 @@ def readtemp(temppin, tempadc, tempslope, tempint):
             running_mean += (temp_raw - running_mean) / n
             
             # Running standard deviation calculation
-            running_variance += (temp_raw - running_mean) * (temp_raw - running_mean) / n
-            running_std_dev = math.sqrt(running_variance)
+            running_variance += ((temp_raw - running_mean) * (temp_raw - running_mean))
+            #OLD running_variance += (temp_raw - running_mean) * (temp_raw - running_mean) / n
+            running_std_dev = math.sqrt(running_variance / (n - 1)) if n > 1 else 0
             
             # Standard error of the mean (SEM)
             sem = running_std_dev / math.sqrt(n)
@@ -237,7 +238,7 @@ def readtemp(temppin, tempadc, tempslope, tempint):
         # Calculate voltage and calibrated temperature using parameters
         temp_volts = (float(running_mean) / 4095) * 5.0
         temp_cal = (running_mean * tempslope) + tempint
-        temp_cal_ci_range = (ci_range * tempslope) + tempint #Scale the error appropriately
+        temp_cal_ci_range = (ci_range * tempslope) #Scale the error appropriately
         
         # Print results
         print(f"{n}|{timestamp}|Raw:{running_mean:1.2f}|Volts:{temp_volts:1.2f}|cal:{temp_cal:1.2f}"
