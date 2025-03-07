@@ -112,12 +112,11 @@ def continuous_temp_monitor(config_file='Upconfig.cfg'):
                 n += 1
                 
                 # Running mean calculation
-                #running_mean += (temp_cal - running_mean) / n
-                running_mean += (temp_raw-running_mean) / n
+                running_mean += (temp_cal - running_mean) / n
+                #running_mean += (temp_raw-running_mean) / n
                 # Running standard deviation calculation
-                #running_std_dev += (temp_cal - running_mean) * (temp_cal - running_mean - running_std_dev) / 
-                # Calculate the standard error of the mean (SEM)
-                running_variance += (temp_raw - running_mean) * (temp_raw - running_mean) / n
+                #Calc the standard error of the mean (SEM)
+                running_variance += (temp_cal - running_mean) * (temp_cal - running_mean) / n
                 running_std_dev = math.sqrt(running_variance)
 
                 sem = running_std_dev / math.sqrt(n)
