@@ -200,6 +200,7 @@ def readtemp(temppin, tempadc, tempslope, tempint):
         wiringpi.digitalWrite(temppin, 1)
         time.sleep(5)  # Allow probe to stabilize
         
+        ci_range = 0
         t_sleep = 0.01
         running_variance = 0
         running_mean = 0
@@ -228,8 +229,7 @@ def readtemp(temppin, tempadc, tempslope, tempint):
             sem = running_std_dev / math.sqrt(n)
             
             # 95% Confidence Interval
-            ci_lower = running_mean - 1.96 * sem
-            ci_upper = running_mean + 1.96 * sem
+            ci_range = 1.96 * sem
             
             time.sleep(t_sleep)
 
@@ -237,12 +237,12 @@ def readtemp(temppin, tempadc, tempslope, tempint):
         # Calculate voltage and calibrated temperature using parameters
         temp_volts = (float(running_mean) / 4095) * 5.0
         temp_cal = (running_mean * tempslope) + tempint
-        temp_cal_ci_range = sem * temp_cal  # Scale the error appropriately
+        temp_cal_ci_range = (ci_range * tempslope) + tempint #Scale the error appropriately
         
         # Print results
         print(f"{n}|{timestamp}|Raw:{running_mean:1.2f}|Volts:{temp_volts:1.2f}|cal:{temp_cal:1.2f}"
               f"|Mean:{running_mean:1.3f}|SEM:{sem:1.1f}"
-              f"|CI: ({ci_lower:1.1f}, {ci_upper:1.1f})")
+              f"|CI_range:{ci_range:1.3f}")
         
         # Turn off probe
         wiringpi.digitalWrite(temppin, 0)
