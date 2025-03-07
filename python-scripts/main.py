@@ -42,7 +42,7 @@ def open_outputfile(fpath, stationid):
         f = open(fpathf, 'a')
     else:
         f = open(fpathf, 'w')
-        headerline = 'Time,ChlGain,ChlRaw,ChlRawRangeCI,ChlVolts,ChlVoltsRangeCI,ChlCal,ChlCalRangeCI,CDOMRaw,CDOMVolts,CDOMCal,TempRaw,TempCal'
+        headerline = 'Time,ChlGain,ChlRaw,ChlRawRangeCI,ChlVolts,ChlVoltsRangeCI,ChlCal,ChlCalRangeCI,CDOMRaw,CDOMVolts,CDOMCal,TempRaw,TempCal,TempCalRangeCI'
         f.write(str(headerline))
         f.write('\n')
     return f, outfile, fpathf
@@ -127,7 +127,7 @@ try:
         ChlAdj = ChlCal - CDOMChlEQ
 
         # Temp
-        TempRaw, TempVolts, TempCal = readtemp(temppin, tempadc, tempslope, tempint)
+        TempRaw, TempVolts, TempCal, TempCal_Range = readtemp(temppin, tempadc, tempslope, tempint)
         
         #time.sleep(5)
         # For testing print results to screen
@@ -151,7 +151,7 @@ try:
         sys.stdout.flush()
 
         # Write results to file
-        r = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s' % (time.strftime("%d-%m-%Y %H:%M:%S"), ChlGain, ChlRaw, ChlRaw_Range, ChlVolts, ChlVolts_Range, ChlCal, ChlCal_Range, CDOMRaw, CDOMVolts, CDOMCal, TempRaw, TempCal)
+        r = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s' % (time.strftime("%d-%m-%Y %H:%M:%S"), ChlGain, ChlRaw, ChlRaw_Range, ChlVolts, ChlVolts_Range, ChlCal, ChlCal_Range, CDOMRaw, CDOMVolts, CDOMCal, TempRaw, TempCal, TempCal_Range)
         f.write(str(r))
         f.write('\n')
         f.close()
