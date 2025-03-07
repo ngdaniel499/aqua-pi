@@ -98,7 +98,7 @@ def continuous_temp_monitor(config_file='Upconfig.cfg'):
         running_std_dev = 0
         n = 0
         time.sleep(5)
-        while n<500:
+        while n<1500:
             try:
                 # Read and print data
                 resp = readadc(tempadc, SPICLK, SPIMOSI, SPIMISO, SPICS)
