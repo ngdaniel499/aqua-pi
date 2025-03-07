@@ -241,9 +241,8 @@ def readtemp(temppin, tempadc, tempslope, tempint):
         temp_cal_ci_range = (ci_range * tempslope) #Scale the error appropriately
         
         # Print results
-        print(f"{n}|{timestamp}|Raw:{running_mean:1.2f}|Volts:{temp_volts:1.2f}|cal:{temp_cal:1.2f}"
-              f"|Mean:{running_mean:1.3f}|SEM:{sem:1.1f}"
-              f"|CI_range:{ci_range:1.3f}")
+#        print(f"{n}|{timestamp}|Raw:{running_mean:1.2f}|Volts:{temp_volts:1.2f}|cal:{temp_cal:1.2f}"
+              f"|CI_range:{temp_cal_ci_range:1.3f}")
         
         # Turn off probe
         wiringpi.digitalWrite(temppin, 0)
