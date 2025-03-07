@@ -202,15 +202,55 @@ def readtemp(temppin, tempadc,tempslope, tempint):
         time.sleep(5)
         #read data from ADC chip
         #read data from ADC Chl 2
+                # Initial probe setup - turn it on once at the start
+        
+        t_sleep = 0.01
+        running_variance = 0
+        running_mean = 0
+        raw_running_mean = 0
+        running_std_dev = 0
+        n = 0
+        time.sleep(5)
+    
         ADC_Chl=tempadc
+        while n<500:
+            try:
+                # Read and print data
+                resp = readadc(tempadc, SPICLK, SPIMOSI, SPIMISO, SPICS)
+
+                temp_raw = resp
+                temp_volts = (float(temp_raw) / 4095) * 5.0
+                temp_cal = (temp_raw * Probe_tempslope) + Probe_tempint
+                timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
+
+                # Update sample count
+                n += 1
+                
+                # Running mean calculation
+                running_mean += (temp_cal - running_mean) / n
+                raw_running_mean += (temp_raw - raw_running_mean) / n
+                # Running standard deviation calculation
+                #Calc the standard error of the mean (SEM)
+                running_variance += (temp_cal - running_mean) * (temp_cal - running_mean) / n
+                running_std_dev = math.sqrt(running_variance)
+
+                sem = running_std_dev / math.sqrt(n)
+                
+                # 95% Confidence Interval (1.96 * SEM for 95% confidence)
+                ci_lower = running_mean - 1.96 * sem
+                ci_upper = running_mean + 1.96 * sem
+                
+                # Print the data with running average and confidence interval
+
+                time.sleep(t_sleep)
+
+
         resp=readadc(ADC_Chl,SPICLK,SPIMOSI,SPIMISO,SPICS)
         # Format response from ADC chip
-        TempRaw = resp
-        TempVolts = (float(TempRaw) / 4095) * 5
-        TempCal = (TempRaw * tempslope) + tempint 
-        print("TempRaw is:", TempRaw)
-        print("TempVolts is:", TempVolts)
-        print( "TempCal is:", TempCal)
+        print(f"{n}|{timestamp}|Raw:{running_mean:1.2f}|Volts:{temp_volts:1.2f}|cal:{temp_cal:1.2f}"
+            f"|Mean:{cal_running_mean:1.3f}|SEM:{sem:1.1f}"
+            f"|CI: ({ci_lower:1.1f}, {ci_upper:1.1f})")
+
         #turn off probe
         wiringpi.digitalWrite(temppin, 0)
         return TempRaw, TempVolts, TempCal
