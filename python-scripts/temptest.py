@@ -127,8 +127,8 @@ def continuous_temp_monitor(config_file='Upconfig.cfg'):
                 
                 # Print the data with running average and confidence interval
                 print(f"{n}|{timestamp}|Raw:{temp_raw:1d}|Volts:{temp_volts:1.2f}|cal:{temp_cal:1.2f}"
-                    f"|Mean:{running_mean:1.3f}|SEM:{sem:1.1f}"
-                    f"|CI: ({ci_lower:1.1f}, {ci_upper:1.1f})")
+                    f"|Mean:{running_mean:1.3f}|SEM:{sem:1.3f}"
+                    f"|CI: ({ci_lower:1.3f}, {ci_upper:1.3f})")
 
                 time.sleep(t_sleep)
                 
