@@ -78,8 +78,8 @@ def continuous_temp_monitor(config_file='Upconfig.cfg'):
         # Get configuration values
         temppin = config.getint('Section1', 'temppin')
         readinterval = config.getfloat('Section1', 'readinterval')
-        Probe_tempslope = config.getfloat('Section1', 'Probe_tempslope')
-        Probe_tempint = config.getfloat('Section1', 'Probe_tempint')    
+        Probe_tempslope = config.getfloat('Section1', 'tempslope')
+        Probe_tempint = config.getfloat('Section1', 'tempint')    
         tempadc = config.getint('Section1', 'tempadc')
 
         print("Starting continuous temperature monitoring...")
