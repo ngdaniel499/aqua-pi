@@ -193,75 +193,71 @@ def readcdom(cdompin, cdomadc,cdomslope, cdomint, cdomchlslope, cdomchlint):
         wiringpi.digitalWrite(cdompin, 1)
         return CDOMRaw, CDOMVolts, CDOMCal, CDOMChlEQ
 
-def readtemp(temppin, tempadc,tempslope, tempint):
+def readtemp(temppin, tempadc, tempslope, tempint):
     try:
-        
-        #Turn on chl probe using relay
+        # Turn on chl probe using relay
         wiringpi.pinMode(temppin, 1)
         wiringpi.digitalWrite(temppin, 1)
-        time.sleep(5)
-        #read data from ADC chip
-        #read data from ADC Chl 2
-                # Initial probe setup - turn it on once at the start
+        time.sleep(5)  # Allow probe to stabilize
         
         t_sleep = 0.01
         running_variance = 0
         running_mean = 0
-        raw_running_mean = 0
         running_std_dev = 0
         n = 0
-        time.sleep(5)
-    
-        ADC_Chl=tempadc
-        while n<500:
-            try:
-                # Read and print data
-                resp = readadc(tempadc, SPICLK, SPIMOSI, SPIMISO, SPICS)
+        
+        # Get current timestamp for logging
+        timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+        
+        # Sample loop
+        while n < 500:
+            # Read data from ADC
+            temp_raw = readadc(tempadc, SPICLK, SPIMOSI, SPIMISO, SPICS)
+            
+            # Update sample count
+            n += 1
+            
+            # Running mean calculation
+            running_mean += (temp_raw - running_mean) / n
+            
+            # Running standard deviation calculation
+            running_variance += (temp_raw - running_mean) * (temp_raw - running_mean) / n
+            running_std_dev = math.sqrt(running_variance)
+            
+            # Standard error of the mean (SEM)
+            sem = running_std_dev / math.sqrt(n)
+            
+            # 95% Confidence Interval
+            ci_lower = running_mean - 1.96 * sem
+            ci_upper = running_mean + 1.96 * sem
+            
+            time.sleep(t_sleep)
 
-                temp_raw = resp
-                temp_volts = (float(temp_raw) / 4095) * 5.0
-                temp_cal = (temp_raw * Probe_tempslope) + Probe_tempint
-                timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
-
-                # Update sample count
-                n += 1
-                
-                # Running mean calculation
-                running_mean += (temp_cal - running_mean) / n
-                raw_running_mean += (temp_raw - raw_running_mean) / n
-                # Running standard deviation calculation
-                #Calc the standard error of the mean (SEM)
-                running_variance += (temp_cal - running_mean) * (temp_cal - running_mean) / n
-                running_std_dev = math.sqrt(running_variance)
-
-                sem = running_std_dev / math.sqrt(n)
-                
-                # 95% Confidence Interval (1.96 * SEM for 95% confidence)
-                ci_lower = running_mean - 1.96 * sem
-                ci_upper = running_mean + 1.96 * sem
-                
-                # Print the data with running average and confidence interval
-
-                time.sleep(t_sleep)
-
-
-        resp=readadc(ADC_Chl,SPICLK,SPIMOSI,SPIMISO,SPICS)
-        # Format response from ADC chip
+        
+        # Calculate voltage and calibrated temperature using parameters
+        temp_volts = (float(running_mean) / 4095) * 5.0
+        temp_cal = (running_mean * tempslope) + tempint
+        temp_cal_ci_range = sem * temp_cal  # Scale the error appropriately
+        
+        # Print results
         print(f"{n}|{timestamp}|Raw:{running_mean:1.2f}|Volts:{temp_volts:1.2f}|cal:{temp_cal:1.2f}"
-            f"|Mean:{cal_running_mean:1.3f}|SEM:{sem:1.1f}"
-            f"|CI: ({ci_lower:1.1f}, {ci_upper:1.1f})")
-
-        #turn off probe
+              f"|Mean:{running_mean:1.3f}|SEM:{sem:1.1f}"
+              f"|CI: ({ci_lower:1.1f}, {ci_upper:1.1f})")
+        
+        # Turn off probe
         wiringpi.digitalWrite(temppin, 0)
-        return TempRaw, TempVolts, TempCal
-    except:
-        print( 'Read Temp Fail')
-        TempRaw = 'Fail'
-        TempVolts = 'Fail'
-        TempCal = 'Fail'
+        
+        return running_mean, temp_volts, temp_cal, temp_cal_ci_range
+    except Exception as e:
+        print(f'Read Temp Fail: {e}')
+        temp_raw = 'Fail'
+        temp_volts = 'Fail'
+        temp_cal = 'Fail'
+        
+        # Make sure to turn off the probe even on failure
         wiringpi.digitalWrite(temppin, 0)
-        return TempRaw, TempVolts, TempCal
-
+        
+        return temp_raw, temp_volts, temp_cal
 def readturb(turbID, turbslope, turbint):
     try:
 #    for x in range(0,1):
