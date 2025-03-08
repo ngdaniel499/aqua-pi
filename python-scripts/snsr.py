@@ -242,7 +242,7 @@ def readtemp(temppin, tempadc, tempslope, tempint):
         
         # Print results
 #        print(f"{n}|{timestamp}|Raw:{running_mean:1.2f}|Volts:{temp_volts:1.2f}|cal:{temp_cal:1.2f}"
-              f"|CI_range:{temp_cal_ci_range:1.3f}")
+#              f"|CI_range:{temp_cal_ci_range:1.3f}")
         
         # Turn off probe
         wiringpi.digitalWrite(temppin, 0)
