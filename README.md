@@ -83,7 +83,7 @@ Refernce: https://learn.adafruit.com/adafruits-raspberry-pi-lesson-11-ds18b20-te
 
 	source .venv/bin/activate
 
-	pip install -r requirements.txt -y
+	pip install -r requirements.txt
 
 #### Configure aquapi
 
