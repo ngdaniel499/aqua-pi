@@ -22,9 +22,9 @@ def run_pump(pump_pin, duration):
 
 def main():
     config = read_config()
-    
+
     try:
-        pumprun = config.getboolean('Section1', 'pumprun')
+        pumprun = config.get('Section1', 'pumprun').lower()
         pumptime = config.getint('Section1', 'pumptime')
         pumppin = config.getint('Section1', 'pumppin')
     except configparser.NoOptionError as e:
@@ -34,10 +34,21 @@ def main():
         print(f"Error: Invalid configuration value. {e}")
         return
 
-    if pumprun:
+    if pumprun == "timed":
         run_pump(pumppin, pumptime)
+    elif pumprun == "on":
+        wiringpi.wiringPiSetupGpio()
+        wiringpi.pinMode(pumppin, 1)
+        wiringpi.digitalWrite(pumppin, 1)
+        print("Pump is always on.")
+    elif pumprun == "off":
+        wiringpi.wiringPiSetupGpio()
+        wiringpi.pinMode(pumppin, 1)
+        wiringpi.digitalWrite(pumppin, 0)
+        print("Pump is off.")
     else:
-        print("pumprun in Upconfig.cfg is set to false")
+        invalid_value = pumprun
+        print(f"Invalid pumprun value: '{invalid_value}'. Expected 'timed', 'on', or 'off'.")
 
 if __name__ == "__main__":
     main()
