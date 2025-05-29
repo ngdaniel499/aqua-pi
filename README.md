@@ -35,9 +35,6 @@ OS Customisation settings:
 	General>Set Locale settings>Keyboard Layout: US
 
 ### RPi setup
-	sudo ip link set eth1 down
- 
-  	sudo ip link set usb0 down
   
 	sudo apt-get update
 
@@ -45,19 +42,20 @@ OS Customisation settings:
 
 #### configure startup for 1-wire and wlan0
 	sudo nano /etc/rc.local
-
-	#add the following lines above exit 0
-
-	
-	#disable ethernet (remove these ip link lines if you want to use ethernet)
+	#!/bin/sh -e
+ 
 	ip link set eth1 down
 
  	ip link set eth0 down
+ 
+  	ip link set usb0 down
      
 	sudo modprobe w1-gpio
 	
 	sudo modprobe w1-therm
 
+	exit 0
+ 
 #### Turn on 1-wire
 
 Refernce: https://learn.adafruit.com/adafruits-raspberry-pi-lesson-11-ds18b20-temperature-sensing/ds18b20
@@ -71,15 +69,15 @@ Refernce: https://learn.adafruit.com/adafruits-raspberry-pi-lesson-11-ds18b20-te
 
 
 #### Install aqua-pi files and dependencies and setup virtual environment
-	sudo apt install git
+	sudo apt install git python3 python3-pip -y 
  
+ 	# if "failed to fetch error / internect connection isn't working delete other connections (nmcli con delete "Wired connection 2")
+  
   	cd ~
   
  	git clone https://github.com/ngdaniel499/aqua-pi.git
  
 	cd ~/aqua-pi
-
-	sudo apt-get install python3 python3-pip
 
 	python3 -m venv .venv
 
