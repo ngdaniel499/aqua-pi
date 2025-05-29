@@ -83,11 +83,15 @@ Refernce: https://learn.adafruit.com/adafruits-raspberry-pi-lesson-11-ds18b20-te
 
 	source .venv/bin/activate
 
-	pip install -r requirements.txt
+	pip install -r requirements.txt -y
+
+#### Configure aquapi
+
 #### Setup Crontab with debugging log
 	# Run AquaPi measurement (main) job every 15 minutes
 	*/15 * * * * /home/pi/aqua-pi/python-scripts/cron-main.sh
 	
 	# Run Pump script every 15 minutes with a 7 minute offset
 	7-59/15 * * * * /home/pi/aqua-pi/python-scripts/cron-pump.sh
+
  
