@@ -87,11 +87,19 @@ Refernce: https://learn.adafruit.com/adafruits-raspberry-pi-lesson-11-ds18b20-te
 
 #### Configure aquapi
 
-#### Setup Crontab with debugging log
-	# Run AquaPi measurement (main) job every 15 minutes
-	*/15 * * * * /home/pi/aqua-pi/python-scripts/cron-main.sh
-	
-	# Run Pump script every 15 minutes with a 7 minute offset
-	7-59/15 * * * * /home/pi/aqua-pi/python-scripts/cron-pump.sh
+ 	cd python-scripts
 
+  	cp Upconfig_template.cfg Upconfig.cfg
+
+ 	#edit station name, pump (if required), calibration if data is available. update server IP
+  
+   	nano Upconfig.cfg 
+
+ 	# install cronjob
+  
+	crontab cronjob.txt
+
+	# edit config if necessary
+  
+	crontab -e 
  
