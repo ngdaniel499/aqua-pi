@@ -64,43 +64,57 @@ def readadc(adcnum, clockpin, mosipin, misopin, cspin):
     adcout>>=1
     return adcout
 
-def readchl(chlpin, chladc, chlslope, chlint, gain):
+def readchl(chlpin, chladc, chlslope_1, chlint_1, chlslope_10, chlint_10, chlslope_100, chlint_100):
     try:
-        # Validate gain
-        if gain not in {1, 10, 100}:
-            print(f"Invalid gain value '{gain}'. Must be '1', '10', or '100'. Exiting.")
-            sys.exit(1)
-
-        # Define pin numbers
+        # Determine gain setting and set calibration parameters
         TENX_PIN = 22
         HUNDREDX_PIN = 27
 
-        # Turn on chl probe using relay
+        wiringpi.digitalWrite(TENX_PIN, 1) # try 10x gain first
+        wiringpi.digitalWrite(HUNDREDX_PIN, 0)
+
         wiringpi.pinMode(chlpin, 1)
         wiringpi.digitalWrite(chlpin, 0)
+        
+        time.sleep(2) # would be a good idea to test transient response in future for both test solution and real chla (could be inducing photo-regulative responses, but light source stability is important too)
+        
+        t_sleep = 0.01
+        n = 0
 
-        # Set gain
-        if gain == 1:
-            print("Chla gain: 1x")
-            wiringpi.digitalWrite(TENX_PIN, 0)
-            wiringpi.digitalWrite(HUNDREDX_PIN, 0)
-        elif gain == 10:
-            print("Chla gain: 10x")
-            wiringpi.digitalWrite(TENX_PIN, 1)
-            wiringpi.digitalWrite(HUNDREDX_PIN, 0)
-        elif gain == 100:
-            print("Chla gain: 100x")
+        while n < 100:
+            resp += readadc(chladc, SPICLK, SPIMOSI, SPIMISO, SPICS)
+            n += 1
+            time.sleep(t_sleep)
+            
+        chl_raw_test = resp / n
+        chl_volt_test = (float(chl_raw_test) / 4095) * 5
+
+        if(chl_volt_test < 0.3):
+            print('reading is less than 0.3V attempting 100X')
+            chl_gain = 100
+            chl_slope = chlslope_100
+            chl_int = chlint_100
             wiringpi.digitalWrite(TENX_PIN, 0)
             wiringpi.digitalWrite(HUNDREDX_PIN, 1)
-        
-        # Allow sensor to stabilize
-        time.sleep(5)
+        elif(chl_volt_test > 4):
+            print('reading is higher than 4V attempting 1X')
+            chl_gain = 1
+            chl_slope = chlslope_1
+            chl_int = chlint_1
+            wiringpi.digitalWrite(TENX_PIN, 0)
+            wiringpi.digitalWrite(HUNDREDX_PIN, 0)
+        else:
+            chl_gain = 10
+            chl_slope = chlslope_10
+            chl_int = chlint_10
+            # digital write already set
 
-        # Initialize variables
+
+        # (Re)Initialize variables
         n = 0
         chl_raw_running_mean = 0
         chl_raw_running_variance = 0
-        t_sleep = 0.01
+
         start_time = time.time()
 
         # Collect data for 3 seconds
@@ -132,31 +146,34 @@ def readchl(chlpin, chladc, chlslope, chlint, gain):
         # Calculate final values
         ChlRaw = chl_raw_running_mean
         ChlVolts = (ChlRaw / 4095) * 5
-        ChlCal = (ChlRaw * chlslope) + chlint
+        ChlCal = (ChlRaw * chl_slope) + chl_int
         chl_raw_ci_range = chl_raw_ci_upper - chl_raw_ci_lower
 
         chl_volts_ci_range = (chl_raw_ci_range / 4095) * 5
         chl_volts_sem = (chl_raw_sem / 4095) * 5
-        chl_cal_ci_range = (chl_raw_ci_range * chlslope) + chlint
-        chl_cal_sem = (chl_raw_sem * chlslope) + chlint
+        chl_cal_ci_range = (chl_raw_ci_range * chl_slope) + chl_int
+        chl_cal_sem = (chl_raw_sem * chl_slope) + chl_int
 
         # Print results
         print("ChlRaw is:", ChlRaw)
         print("ChlVolts is:", ChlVolts)
         print("ChlCal is:", ChlCal)
+        print("Chl Gain is:", chl_gain)
 
         # Turn off probe
         wiringpi.digitalWrite(chlpin, 1)
-
+        wiringpi.digitalWrite(TENX_PIN, 0)
+        wiringpi.digitalWrite(HUNDREDX_PIN, 0)
+        
         return (ChlRaw, chl_raw_ci_range, chl_raw_sem, 
                 ChlVolts, chl_volts_ci_range, chl_volts_sem, 
-                ChlCal, chl_cal_ci_range, chl_cal_sem)
+                ChlCal, chl_cal_ci_range, chl_cal_sem, chl_gain)
 
     except Exception as e:
         print(f"Read Chl Fail: {e}")
         
         # Turn off probe and reset pins
-        wiringpi.digitalWrite(chlpin, 1)
+        wiringpi.digitalWrite(chlpin, 1) #high off relay
         wiringpi.digitalWrite(TENX_PIN, 0)
         wiringpi.digitalWrite(HUNDREDX_PIN, 0)
 
