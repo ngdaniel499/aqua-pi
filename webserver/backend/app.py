@@ -165,6 +165,61 @@ def allowed_file(filename):
 def get_prefix(filename):
     return filename.split('_', 1)[0]
 
+@app.route('/api/add-measurement', methods=['POST'])
+def add_measurement():
+    import csv
+    from collections import OrderedDict
+
+    data = request.json
+    station = data.get('station')
+    timestamp = data.get('timestamp')  # ISO 8601 format
+    parameter = data.get('parameter')
+    value = data.get('value')
+
+    if not all([station, timestamp, parameter, value]):
+        return jsonify({"error": "Missing field"}), 400
+
+    # Convert to the required format
+    try:
+        dt = datetime.fromisoformat(timestamp)
+        formatted_time = dt.strftime('%d-%m-%Y %H:%M:%S')
+    except ValueError:
+        return jsonify({"error": "Invalid timestamp"}), 400
+
+    folder = os.path.join(app.config['UPLOAD_FOLDER'], station)
+    if not os.path.isdir(folder):
+        os.makedirs(folder)
+
+    file_path = os.path.join(folder, 'custom.csv')
+
+    rows = []
+    headers = set(['Time', parameter])
+
+    if os.path.exists(file_path):
+        with open(file_path, 'r', newline='') as f:
+            reader = csv.DictReader(f)
+            rows = list(reader)
+            for row in rows:
+                headers.update(row.keys())
+
+    headers = sorted(headers)  # Consistent ordering
+    new_row = OrderedDict((h, '') for h in headers)
+    new_row['Time'] = formatted_time
+    new_row[parameter] = value
+
+    rows.append(new_row)
+
+    with open(file_path, 'w', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=headers)
+        writer.writeheader()
+        for row in rows:
+            complete_row = {h: row.get(h, '') for h in headers}
+            writer.writerow(complete_row)
+
+    return jsonify({"status": "success"})
+
+
+
 def drawResults(station_folder):
     app.logger.info(f"Starting drawResults for station folder: {station_folder}")
     
