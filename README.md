@@ -96,38 +96,38 @@ Refernce: https://learn.adafruit.com/adafruits-raspberry-pi-lesson-11-ds18b20-te
 	
  ## Webserver
  daniel@debian:cat /etc/systemd/system/aquapi-frontend.service
- 
-[Unit]
-Description=AquaPi Frontend (Next.js)
-
-After=network.target
-
-[Service]
-User=daniel
-Group=daniel
-WorkingDirectory=/home/daniel/aqua-pi/webserver/frontend
-ExecStart=/usr/bin/npm run start -- -p 3001
-Restart=always
-RestartSec=5
-Environment=NODE_ENV=production
-
-[Install]
-WantedBy=multi-user.target
+	 
+	[Unit]
+	Description=AquaPi Frontend (Next.js)
+	
+	After=network.target
+	
+	[Service]
+	User=daniel
+	Group=daniel
+	WorkingDirectory=/home/daniel/aqua-pi/webserver/frontend
+	ExecStart=/usr/bin/npm run start -- -p 3001
+	Restart=always
+	RestartSec=5
+	Environment=NODE_ENV=production
+	
+	[Install]
+	WantedBy=multi-user.target
 
 daniel@debian:~/aqua-pi/webserver$ cat /etc/systemd/system/aquapi-backend.service
-[Unit]
-Description=AquaPi Backend (Gunicorn)
-After=network.target
-
-[Service]
-User=daniel
-Group=daniel
-WorkingDirectory=/home/daniel/aqua-pi/webserver/backend
-Environment="PATH=/home/daniel/aqua-pi/webserver/backend/venv/bin"
-ExecStart=/home/daniel/aqua-pi/webserver/backend/venv/bin/gunicorn --bind 127.0.0.1:8000 app:app
-Restart=always
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
+	[Unit]
+	Description=AquaPi Backend (Gunicorn)
+	After=network.target
+	
+	[Service]
+	User=daniel
+	Group=daniel
+	WorkingDirectory=/home/daniel/aqua-pi/webserver/backend
+	Environment="PATH=/home/daniel/aqua-pi/webserver/backend/venv/bin"
+	ExecStart=/home/daniel/aqua-pi/webserver/backend/venv/bin/gunicorn --bind 127.0.0.1:8000 app:app
+	Restart=always
+	RestartSec=5
+	
+	[Install]
+	WantedBy=multi-user.target
 
