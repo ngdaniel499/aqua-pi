@@ -13,7 +13,7 @@ from threading import Timer
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'd2271438da7ed08956bafefc80a475fc4c37d6f0bbb3747e617e52d6acfd1c04')
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'secretkeyhere')
 
 # Set up logging
 if not os.path.exists('logs'):
