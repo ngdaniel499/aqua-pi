@@ -69,7 +69,7 @@ def readchl(chlpin, chladc, chlslope_1, chlint_1, chlslope_10, chlint_10, chlslo
     TENX_PIN = 22
     HUNDREDX_PIN = 27
     t_sleep = 0
-    n_samples = 500
+    n_samples = 5000
 
     try:
         # Turn on chl probe using relay
