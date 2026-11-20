@@ -13,6 +13,7 @@ import wiringpi2 as wiringpi
 import RPi.GPIO as GPIO
 from decimal import*
 import signal
+import statistics
 
 THREEPLACES = Decimal(10) ** -3
 THREEPLACES=10**-3
@@ -65,127 +66,102 @@ def readadc(adcnum, clockpin, mosipin, misopin, cspin):
     return adcout
 
 def readchl(chlpin, chladc, chlslope_1, chlint_1, chlslope_10, chlint_10, chlslope_100, chlint_100):
+    TENX_PIN = 22
+    HUNDREDX_PIN = 27
+    t_sleep = 0
+    n_samples = 500
+
     try:
-        # Determine gain setting and set calibration parameters
-        TENX_PIN = 22
-        HUNDREDX_PIN = 27
-
-        wiringpi.digitalWrite(TENX_PIN, 1) # try 10x gain first
-        wiringpi.digitalWrite(HUNDREDX_PIN, 0)
-
+        # Turn on chl probe using relay
         wiringpi.pinMode(chlpin, 1)
         wiringpi.digitalWrite(chlpin, 0)
-        
+
         time.sleep(2) # would be a good idea to test transient response in future for both test solution and real chla (could be inducing photo-regulative responses, but light source stability is important too)
-        
-        t_sleep = 0.01
-        n = 0
 
-        while n < 100:
-            resp += readadc(chladc, SPICLK, SPIMOSI, SPIMISO, SPICS)
+        # ---------- 1x gain ----------
+        wiringpi.digitalWrite(TENX_PIN, 0)
+        wiringpi.digitalWrite(HUNDREDX_PIN, 0)
+        time.sleep(1) # settle after gain change
+
+        readings = []
+        n = 0
+        t0 = time.time()
+        while n < n_samples:
+            readings.append(readadc(chladc, SPICLK, SPIMOSI, SPIMISO, SPICS))
             n += 1
             time.sleep(t_sleep)
-            
-        chl_raw_test = resp / n
-        chl_volt_test = (float(chl_raw_test) / 4095) * 5
+        print("1x sampling took", time.time() - t0, "s for", n_samples, "samples")
+        ChlRaw_1x = statistics.mean(readings)
+        ChlRaw_SD_1x = statistics.stdev(readings)
+        ChlCal_1x = (ChlRaw_1x * chlslope_1) + chlint_1
+        ChlCal_SD_1x = abs(ChlRaw_SD_1x * chlslope_1)
 
-        if(chl_volt_test < 0.3):
-            print('reading is less than 0.3V attempting 100X')
-            chl_gain = 100
-            chl_slope = chlslope_100
-            chl_int = chlint_100
-            wiringpi.digitalWrite(TENX_PIN, 0)
-            wiringpi.digitalWrite(HUNDREDX_PIN, 1)
-        elif(chl_volt_test > 4):
-            print('reading is higher than 4V attempting 1X')
-            chl_gain = 1
-            chl_slope = chlslope_1
-            chl_int = chlint_1
-            wiringpi.digitalWrite(TENX_PIN, 0)
-            wiringpi.digitalWrite(HUNDREDX_PIN, 0)
-        else:
-            chl_gain = 10
-            chl_slope = chlslope_10
-            chl_int = chlint_10
-            # digital write already set
+        # ---------- 10x gain ----------
+        wiringpi.digitalWrite(TENX_PIN, 1)
+        wiringpi.digitalWrite(HUNDREDX_PIN, 0)
+        time.sleep(1) # settle after gain change
 
-
-        # (Re)Initialize variables
+        readings = []
         n = 0
-        chl_raw_running_mean = 0
-        chl_raw_running_variance = 0
-
-        start_time = time.time()
-
-        # Collect data for 3 seconds
-        while time.time() - start_time < 3:
-            resp = readadc(chladc, SPICLK, SPIMOSI, SPIMISO, SPICS)
-            chl_raw = resp
+        t0 = time.time()
+        while n < n_samples:
+            readings.append(readadc(chladc, SPICLK, SPIMOSI, SPIMISO, SPICS))
             n += 1
-
-            # Update running mean
-            delta = chl_raw - chl_raw_running_mean
-            chl_raw_running_mean += delta / n
-
-            # Update running variance (Welford's method)
-            chl_raw_running_variance += delta * (chl_raw - chl_raw_running_mean)
-            
             time.sleep(t_sleep)
+        print("10x sampling took", time.time() - t0, "s for", n_samples, "samples")
+        ChlRaw_10x = statistics.mean(readings)
+        ChlRaw_SD_10x = statistics.stdev(readings)
+        ChlCal_10x = (ChlRaw_10x * chlslope_10) + chlint_10
+        ChlCal_SD_10x = abs(ChlRaw_SD_10x * chlslope_10)
 
-        # Calculate standard deviation
-        if n > 1:
-            chl_raw_running_std_dev = math.sqrt(chl_raw_running_variance / (n - 1))
-        else:
-            chl_raw_running_std_dev = 0
+        # ---------- 100x gain ----------
+        wiringpi.digitalWrite(TENX_PIN, 0)
+        wiringpi.digitalWrite(HUNDREDX_PIN, 1)
+        time.sleep(1) # settle after gain change
 
-        # Calculate SEM and CI
-        chl_raw_sem = chl_raw_running_std_dev / math.sqrt(n)
-        chl_raw_ci_lower = chl_raw_running_mean - 1.96 * chl_raw_sem
-        chl_raw_ci_upper = chl_raw_running_mean + 1.96 * chl_raw_sem
-
-        # Calculate final values
-        ChlRaw = chl_raw_running_mean
-        ChlVolts = (ChlRaw / 4095) * 5
-        ChlCal = (ChlRaw * chl_slope) + chl_int
-        chl_raw_ci_range = chl_raw_ci_upper - chl_raw_ci_lower
-
-        chl_volts_ci_range = (chl_raw_ci_range / 4095) * 5
-        chl_volts_sem = (chl_raw_sem / 4095) * 5
-        chl_cal_ci_range = (chl_raw_ci_range * chl_slope) + chl_int
-        chl_cal_sem = (chl_raw_sem * chl_slope) + chl_int
+        readings = []
+        n = 0
+        t0 = time.time()
+        while n < n_samples:
+            readings.append(readadc(chladc, SPICLK, SPIMOSI, SPIMISO, SPICS))
+            n += 1
+            time.sleep(t_sleep)
+        print("100x sampling took", time.time() - t0, "s for", n_samples, "samples")
+        ChlRaw_100x = statistics.mean(readings)
+        ChlRaw_SD_100x = statistics.stdev(readings)
+        ChlCal_100x = (ChlRaw_100x * chlslope_100) + chlint_100
+        ChlCal_SD_100x = abs(ChlRaw_SD_100x * chlslope_100)
 
         # Print results
-        print("ChlRaw is:", ChlRaw)
-        print("ChlVolts is:", ChlVolts)
-        print("ChlCal is:", ChlCal)
-        print("Chl Gain is:", chl_gain)
+        print("Chl 1x is:", ChlRaw_1x, "+-", ChlRaw_SD_1x, "| Cal:", ChlCal_1x, "+-", ChlCal_SD_1x)
+        print("Chl 10x is:", ChlRaw_10x, "+-", ChlRaw_SD_10x, "| Cal:", ChlCal_10x, "+-", ChlCal_SD_10x)
+        print("Chl 100x is:", ChlRaw_100x, "+-", ChlRaw_SD_100x, "| Cal:", ChlCal_100x, "+-", ChlCal_SD_100x)
 
         # Turn off probe
         wiringpi.digitalWrite(chlpin, 1)
         wiringpi.digitalWrite(TENX_PIN, 0)
         wiringpi.digitalWrite(HUNDREDX_PIN, 0)
-        
-        return (ChlRaw, chl_raw_ci_range, chl_raw_sem, 
-                ChlVolts, chl_volts_ci_range, chl_volts_sem, 
-                ChlCal, chl_cal_ci_range, chl_cal_sem, chl_gain)
 
+        return (ChlRaw_1x, ChlRaw_SD_1x, ChlCal_1x, ChlCal_SD_1x,
+                ChlRaw_10x, ChlRaw_SD_10x, ChlCal_10x, ChlCal_SD_10x,
+                ChlRaw_100x, ChlRaw_SD_100x, ChlCal_100x, ChlCal_SD_100x)
     except Exception as e:
         print(f"Read Chl Fail: {e}")
-        
+
         # Turn off probe and reset pins
         wiringpi.digitalWrite(chlpin, 1) #high off relay
         wiringpi.digitalWrite(TENX_PIN, 0)
         wiringpi.digitalWrite(HUNDREDX_PIN, 0)
 
-        return ('Fail', 'Fail', 'Fail', 'Fail', 'Fail', 'Fail', 'Fail', 'Fail', 'Fail')
-    
+        return ('Fail',) * 12
+
 def readcdom(cdompin, cdomadc,cdomslope, cdomint, cdomchlslope, cdomchlint):
     try:
-        #Turn on CDOM probe using relay 
+        #Turn on CDOM probe using relay
         wiringpi.pinMode(cdompin, 1)
         wiringpi.digitalWrite(cdompin, 0)
         time.sleep(5)
-        #read data from ADC chip    
+        #read data from ADC chip
         #read data from ADC Chl 1
         ADC_Chl=cdomadc
         resp=readadc(ADC_Chl,SPICLK,SPIMOSI,SPIMISO,SPICS)
@@ -212,73 +188,45 @@ def readcdom(cdompin, cdomadc,cdomslope, cdomint, cdomchlslope, cdomchlint):
 
 def readtemp(temppin, tempadc, tempslope, tempint):
     try:
-        # Turn on chl probe using relay
+        # Turn on temp probe using relay
         wiringpi.pinMode(temppin, 1)
         wiringpi.digitalWrite(temppin, 1)
         time.sleep(5)  # Allow probe to stabilize
-        
-        ci_range = 0
+
         t_sleep = 0.01
-        running_variance = 0
-        running_mean = 0
-        running_std_dev = 0
         n = 0
-        
-        # Get current timestamp for logging
-        timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-        
+        readings = []
+
         # Sample loop
         while n < 1000:
-            # Read data from ADC
-            temp_raw = readadc(tempadc, SPICLK, SPIMOSI, SPIMISO, SPICS)
-            
-            # Update sample count
+            readings.append(readadc(tempadc, SPICLK, SPIMOSI, SPIMISO, SPICS))
             n += 1
-            
-            # Running mean calculation
-            running_mean += (temp_raw - running_mean) / n
-            
-            # Running standard deviation calculation
-            running_variance += ((temp_raw - running_mean) * (temp_raw - running_mean))
-            #OLD running_variance += (temp_raw - running_mean) * (temp_raw - running_mean) / n
-            running_std_dev = math.sqrt(running_variance / (n - 1)) if n > 1 else 0
-            
-            # Standard error of the mean (SEM)
-            sem = running_std_dev / math.sqrt(n)
-            
-            # 95% Confidence Interval
-            ci_range = 1.96 * sem
-            
             time.sleep(t_sleep)
 
-        
-        # Calculate voltage and calibrated temperature using parameters
-        temp_volts = (float(running_mean) / 4095) * 5.0
-        temp_cal = (running_mean * tempslope) + tempint
-        temp_cal_ci_range = (ci_range * tempslope) #Scale the error appropriately
-        
-        # Print results
-#        print(f"{n}|{timestamp}|Raw:{running_mean:1.2f}|Volts:{temp_volts:1.2f}|cal:{temp_cal:1.2f}"
-#              f"|CI_range:{temp_cal_ci_range:1.3f}")
-        
+        # Mean and SD of raw readings
+        TempRaw = statistics.mean(readings)
+        TempRaw_SD = statistics.stdev(readings)
+
+        # Calibrate (intercept only applies to the mean, not the SD)
+        TempCal = (TempRaw * tempslope) + tempint
+        TempCal_SD = abs(TempRaw_SD * tempslope)
+
         # Turn off probe
         wiringpi.digitalWrite(temppin, 0)
-        
-        return running_mean, temp_volts, temp_cal, temp_cal_ci_range
+
+        return TempRaw, TempRaw_SD, TempCal, TempCal_SD
     except Exception as e:
         print(f'Read Temp Fail: {e}')
-        temp_raw = 'Fail'
-        temp_volts = 'Fail'
-        temp_cal = 'Fail'
-        
+
         # Make sure to turn off the probe even on failure
         wiringpi.digitalWrite(temppin, 0)
-        
-        return temp_raw, temp_volts, temp_cal
+
+        return ('Fail',) * 4
+
 def readturb(turbID, turbslope, turbint):
     try:
 #    for x in range(0,1):
-    #Set up serial comms. Sensor connected by Prolific USB to Serial Converter     
+    #Set up serial comms. Sensor connected by Prolific USB to Serial Converter
         port = serial.Serial("/dev/ttyUSB1", baudrate=1200, bytesize=7, parity='E', stopbits=1, xonxoff=0, rtscts=0, timeout=5)
         #Clear buffers
         port.flushInput()
@@ -295,14 +243,14 @@ def readturb(turbID, turbslope, turbint):
         #Send command to initiate measurement
         port.write('single\r')
         time.sleep(1)
-        response= port.readlines()        
+        response= port.readlines()
         #print(response)
         respvalues = []
         for t in response[3].split():
             try:
                 respvalues.append(float(t))
             except ValueError:
-                pass    
+                pass
         TurbManu = respvalues[0]
         TurbRaw = respvalues[1]
         TurbCal = (TurbRaw*turbslope)+turbint
@@ -325,7 +273,7 @@ def check_serial_ports():
     if not ports:
         print("DEBUG: No serial ports found!")
         return
-    
+
     for port in ports:
         print(f"DEBUG: Found port: {port.device}")
         print(f"    Description: {port.description}")
@@ -342,13 +290,13 @@ def readcond(condpin, condID, conda, condb, condc, condd, tempslope, tempint):
         wiringpi.digitalWrite(condpin, 0)
         print("DEBUG: Set pin low, waiting 5 seconds for sensor power-up")
         time.sleep(5)
-        
+
         # Check available serial ports
         check_serial_ports()
-        
+
         print("\nDEBUG: Attempting to open /dev/ttyUSB0")
         try:
-            port = serial.Serial("/dev/ttyUSB0", baudrate=4800, bytesize=8, 
+            port = serial.Serial("/dev/ttyUSB0", baudrate=4800, bytesize=8,
                                parity='N', stopbits=1, xonxoff=0, rtscts=0, timeout=10)
             print(f"DEBUG: Serial port opened successfully")
             print(f"DEBUG: Port settings:")
@@ -359,7 +307,7 @@ def readcond(condpin, condID, conda, condb, condc, condd, tempslope, tempint):
         except serial.SerialException as e:
             print(f"ERROR: Failed to open serial port: {str(e)}")
             raise
-        
+
         # Wake up odyssey sensor
         response = b""
         trycount = 0
@@ -367,38 +315,38 @@ def readcond(condpin, condID, conda, condb, condc, condd, tempslope, tempint):
             print(f"\nDEBUG: Attempting sensor wake up, try {trycount + 1}")
             port.flushInput()
             port.flushOutput()
-            
+
             # Send wake-up byte and verify it was sent
             wake_byte = bytes([0x01])
             bytes_written = port.write(wake_byte)
             print(f"DEBUG: Wrote {bytes_written} byte(s): 0x01")
-            
+
             # Wait briefly for the write to complete
             port.flush()
-            
+
             # Try to read response with explicit timeout
             print("DEBUG: Waiting for response...")
             response = port.read(3)
             print(f"DEBUG: Response received: {response} (length: {len(response)})")
             print(f"DEBUG: Response in hex: {response.hex() if response else 'empty'}")
-            
+
             if not response:
                 print("DEBUG: No response received within timeout period")
-            
+
             trycount += 1
-            
+
             if trycount < 3 and response != b"Hi!":
                 print("DEBUG: Incorrect response, waiting 1 second before retry")
                 time.sleep(1)
-        
+
         if response != b"Hi!":
             raise Exception(f"Failed to wake up sensor after {trycount} attempts")
-        
+
         print("\nDEBUG: Sensor wake-up successful, starting trace mode")
         time.sleep(1)
         port.flushOutput()
         port.flushInput()
-        
+
         trace_bytes = [bytes([0x54]), bytes([0x1a])]
         for b in trace_bytes:
             bytes_written = port.write(b)
@@ -408,32 +356,32 @@ def readcond(condpin, condID, conda, condb, condc, condd, tempslope, tempint):
         print("\nDEBUG: Reading sensor data")
         data = port.read(4)
         print(f"DEBUG: Read {len(data)} bytes: {data.hex() if data else 'empty'}")
-        
+
         if len(data) != 4:
             raise Exception(f"Expected 4 bytes of data, got {len(data)}")
-        
+
         print(f"DEBUG: Raw data received: {list(data)}")
-        
+
         # Calculate values - data is already bytes in Python 3
         TempRaw = data[0] + data[1]*256
         CondRaw = data[2] + data[3]*256
-        
+
         print(f"DEBUG: Raw values - Temp: {TempRaw}, Cond: {CondRaw}")
-        
+
         # Perform Calibrations
         TempCal = (TempRaw*tempslope) + tempint
-        CondCal = (CondRaw**3)*conda + (CondRaw**2)*condb + CondRaw*condc + condd    
-        
+        CondCal = (CondRaw**3)*conda + (CondRaw**2)*condb + CondRaw*condc + condd
+
         print(f"DEBUG: Calibrated values - Temp: {TempCal}, Cond: {CondCal}")
-        
+
         # Calculate SpCond and Salinity
         SpCond = CondCal/(1+0.0191*(TempCal-25))
         R = SpCond/53087
         k1, k2, k3, k4, k5, k6 = 0.0120, -0.2174, 25.3283, 13.7714, -6.4778, 2.5842
         Salinity = k1 + (k2*R**(1/2)) + (k3*R) + (k4*R**(3/2)) + (k5*R**2) + (k6*R**(5/2))
-        
+
         print(f"DEBUG: Calculated values - SpCond: {SpCond}, Salinity: {Salinity}")
-        
+
         # End trace mode
         print("DEBUG: Ending trace mode")
         response = b"No"
@@ -443,16 +391,16 @@ def readcond(condpin, condID, conda, condb, condc, condd, tempslope, tempint):
             for count in range(0, 256):
                 port.write(bytes([0x01]))
             response = port.read(3)
-            
-        wiringpi.digitalWrite(condpin, 1)    
+
+        wiringpi.digitalWrite(condpin, 1)
         return TempRaw, CondRaw, TempCal, CondCal, SpCond, Salinity
-        
+
     except Exception as e:
         print("\nERROR: Sensor read failed")
         print(f"ERROR: {str(e)}")
         print(f"ERROR: Full traceback:")
         print(traceback.format_exc())
-        
+
         if port:
             try:
                 port.close()
@@ -460,10 +408,10 @@ def readcond(condpin, condID, conda, condb, condc, condd, tempslope, tempint):
             except:
                 print("ERROR: Failed to close serial port")
                 print(traceback.format_exc())
-        
+
         wiringpi.digitalWrite(condpin, 1)
         return 'Fail', 'Fail', 'Fail', 'Fail', 'Fail', 'Fail'
-    
+
     finally:
         if port and port.is_open:
             try:
@@ -479,9 +427,9 @@ def readcond(condpin, condID, conda, condb, condc, condd, tempslope, tempint):
         wiringpi.pinMode(condpin, 1)
         wiringpi.digitalWrite(condpin, 0)
         time.sleep(5)
-        #Set up serial comms. Sensor connected by Prolific USB to Serial Conveter 
+        #Set up serial comms. Sensor connected by Prolific USB to Serial Conveter
         port = serial.Serial("/dev/ttyUSB0", baudrate=4800, bytesize=8, parity='N', stopbits=1, xonxoff=0, rtscts=0, timeout=10)
-        
+
         # wake up odyssey sensor
         response = "No"
         trycount = 0
@@ -494,27 +442,27 @@ def readcond(condpin, condID, conda, condb, condc, condd, tempslope, tempint):
             if trycount == 3 :
                 break
             trycount = trycount + 1
-        
+
         #Start trace mode by sending "T" followed by sensor ID
         time.sleep(1)
         port.flushOutput()
         port.flushInput()
         port.write(chr(0x54))
-        port.write(chr(0x1a))   
+        port.write(chr(0x1a))
 
         #Read data, data delivered in stream of 4 bytes representing 2 lots of 0-65535 values for temperature / salinity
         data=port.read(4)
-        
+
         #Test Code used to check calculations
         #data1 =chr(int("0x09",16))
         #data2 =chr(int("13",16))
-    
+
         #Calculate Temp & Conductivity
         TempRaw = ord(data[0])+ord(data[1])*256
         CondRaw = ord(data[2])+ord(data[3])*256
         # Perform Calibrations
         TempCal = (TempRaw*tempslope) + tempint
-        CondCal = (CondRaw**3)*conda + (CondRaw**2)*condb + CondRaw*condc + condd    
+        CondCal = (CondRaw**3)*conda + (CondRaw**2)*condb + CondRaw*condc + condd
         #Calculate SpCond and Salinity
         SpCond = CondCal/(1+0.0191*(TempCal-25))
         R = SpCond/53087
@@ -533,7 +481,7 @@ def readcond(condpin, condID, conda, condb, condc, condd, tempslope, tempint):
             for count in range(0, 256):
                 port.write(chr(0x01))
             response=port.read(3)
-        wiringpi.digitalWrite(condpin, 1)    
+        wiringpi.digitalWrite(condpin, 1)
         return TempRaw, CondRaw, TempCal, CondCal, SpCond, Salinity
     except:
         #print 'Read Temp/Cond Fail'

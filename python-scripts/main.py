@@ -2,7 +2,7 @@
 #----------------------------------------------------------------------------------------------#
 # NAME:         AquaPi.py
 # CREATED:      August 10 2014
-# CREATED BY:   Daniel P Harrison, University of Sydney 
+# CREATED BY:   Daniel P Harrison, University of Sydney
 #               Some intital code adapted from Bjorn Veltman & Adafruit
 # Modification 1 By: Shariq Riaz, University of Sydney
 #                       ADC read script is changed and pin numbers
@@ -61,7 +61,7 @@ try:
     stationid = config.get('Section1', 'stationid')
     readinterval = config.getfloat('Section1', 'readinterval')
     cdompin = config.getint('Section1', 'cdompin')
-    chlpin = config.getint('Section1', 'chlpin')    
+    chlpin = config.getint('Section1', 'chlpin')
     temppin = config.getint('Section1', 'temppin')
 #    condpin = config.getint('Section1', 'condpin')
     cdomadc = config.getint('Section1', 'cdomadc')
@@ -73,7 +73,7 @@ try:
     chlslope_10 = config.getfloat('Section1', 'chlslope_10')
     chlint_10 = config.getfloat('Section1', 'chlint_10')
     chlslope_100 = config.getfloat('Section1', 'chlslope_100')
-    chlint_100 = config.getfloat('Section1', 'chlint_100')        
+    chlint_100 = config.getfloat('Section1', 'chlint_100')
     cdomslope = config.getfloat('Section1', 'cdomslope')
     cdomint = config.getfloat('Section1', 'cdomint')
     cdomchlslope = config.getfloat('Section1', 'cdomchlslope')
@@ -83,40 +83,39 @@ try:
   #  condc = config.getfloat('Section1', 'condc')
    # condd = config.getfloat('Section1', 'condd')
     #Probe_tempslope = config.getfloat('Section1', 'Probe_tempslope')
-    #Probe_tempint = config.getfloat('Section1', 'Probe_tempint')    
+    #Probe_tempint = config.getfloat('Section1', 'Probe_tempint')
     tempslope = config.getfloat('Section1', 'tempslope')
     tempint = config.getfloat('Section1', 'tempint')
     #create output file
     f, outfile, fpathf = open_outputfile(fpath, stationid)
-    #create variable for current file hour 
+    #create variable for current file hour
     now = datetime.datetime.now()
     checkhour = now.hour
-    
+
     for x in range(0, 1):
         # Flush flow chamber
         wiringpi.wiringPiSetupGpio()
-        
+
         # Conduct Measurements
 
         # Temperature / conductivity
         #Probe_TempRaw, CondRaw, Probe_TempCal, CondCal, SpCond, Salinity = readcond(condpin, 'USB0', conda, condb, condc, condd, Probe_tempslope, Probe_tempint)
 
-        # Chl gain switching, start at 10x move to 100x if reading is too low, move to 1x if reading is too high. 
-
-        ChlRaw, ChlRaw_Range, ChlRaw_SEM, ChlVolts, ChlVolts_Range, ChlVolts_SEM, ChlCal, ChlCal_Range, ChlCal_SEM, ChlGain = readchl(chlpin, chladc, chlslope_1, chlint_1, chlslope_10, chlint_10, chlslope_100, chlint_100)
-
-
+        # Chl gain switching, start at 10x move to 100x if reading is too low, move to 1x if reading is too high.
+        #LEGACY CODE vvv
+        # ChlRaw, ChlRaw_Range, ChlRaw_SEM, ChlVolts, ChlVolts_Range, ChlVolts_SEM, ChlCal, ChlCal_Range, ChlCal_SEM, ChlGain = readchl(chlpin, chladc, chlslope_1, chlint_1, chlslope_10, chlint_10, chlslope_100, chlint_100)
+        ChlRaw_1x, ChlRaw_SD_1x, ChlCal_1x, ChlCal_SD_1x, ChlRaw_10x, ChlRaw_SD_10x, ChlCal_10x, ChlCal_SD_10x, ChlRaw_100x, ChlRaw_SD_100x, ChlCal_100x, ChlCal_SD_100x = readchl(chlpin, chladc, chlslope_1, chlint_1, chlslope_10, chlint_10, chlslope_100, chlint_100)
 
 
         time.sleep(0.5)
-        
-        # CDOM
-        CDOMRaw, CDOMVolts, CDOMCal, CDOMChlEQ = readcdom(cdompin, cdomadc, cdomslope, cdomint, cdomchlslope, cdomchlint)
-        ChlAdj = ChlCal - CDOMChlEQ
+
+        # CDOM UNCOMMENT LINE BELOW IF USING CDOM
+        #CDOMRaw, CDOMVolts, CDOMCal, CDOMChlEQ = readcdom(cdompin, cdomadc, cdomslope, cdomint, cdomchlslope, cdomchlint)
+        #ChlAdj = ChlCal - CDOMChlEQ
 
         # Temp
-        TempRaw, TempVolts, TempCal, TempCal_Range = readtemp(temppin, tempadc, tempslope, tempint)
-        
+        TempRaw, TempRaw_SD, TempCal, TempCal_SD = readtemp(temppin, tempadc, tempslope, tempint)
+
         #time.sleep(5)
         # For testing print results to screen
         #print('Probe_Tempraw', Probe_TempRaw)
@@ -129,9 +128,9 @@ try:
         print('ChlRaw', ChlRaw, '+-', ChlRaw_Range)
         print('ChlVolts', ChlVolts, '+-', ChlVolts_Range)
         print('ChlCal', ChlCal, '+-', ChlCal_Range)
-        print('CDOMRaw', CDOMRaw)
-        print('CDOMVolts', CDOMVolts)
-        print('CDOMCal', CDOMCal)
+        # print('CDOMRaw', CDOMRaw)
+        # print('CDOMVolts', CDOMVolts)
+        # print('CDOMCal', CDOMCal)
         #print('CDOM Chl EQ', CDOMChlEQ)
         #print('Chl Adjusted', ChlAdj)
         print('Tempraw', TempRaw)
@@ -139,10 +138,15 @@ try:
         sys.stdout.flush()
 
         # Write results to file
-        r = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s' % (time.strftime("%d-%m-%Y %H:%M:%S"), ChlGain, ChlRaw, ChlRaw_Range, ChlVolts, ChlVolts_Range, ChlCal, ChlCal_Range, CDOMRaw, CDOMVolts, CDOMCal, TempRaw, TempCal, TempCal_Range)
-        f.write(str(r))
-        f.write('\n')
-        f.close()
+        row = [
+            time.strftime("%d-%m-%Y %H:%M:%S"),
+            ChlRaw_1x, ChlRaw_SD_1x, ChlCal_1x, ChlCal_SD_1x,
+            ChlRaw_10x, ChlRaw_SD_10x, ChlCal_10x, ChlCal_SD_10x,
+            ChlRaw_100x, ChlRaw_SD_100x, ChlCal_100x, ChlCal_SD_100x,
+            TempRaw, TempRaw_SD, TempCal, TempCal_SD,
+        ]
+        f.write(','.join(str(v) for v in row) + '\n')
+        f.flush()
 
 except:
     tb = sys.exc_info()[2]
