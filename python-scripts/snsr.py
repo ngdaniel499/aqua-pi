@@ -132,10 +132,10 @@ def readchl(chlpin, chladc, chlslope_1, chlint_1, chlslope_10, chlint_10, chlslo
         ChlCal_100x = (ChlRaw_100x * chlslope_100) + chlint_100
         ChlCal_SD_100x = abs(ChlRaw_SD_100x * chlslope_100)
 
-        # Print results
-        print("Chl 1x is:", ChlRaw_1x, "+-", ChlRaw_SD_1x, "| Cal:", ChlCal_1x, "+-", ChlCal_SD_1x)
-        print("Chl 10x is:", ChlRaw_10x, "+-", ChlRaw_SD_10x, "| Cal:", ChlCal_10x, "+-", ChlCal_SD_10x)
-        print("Chl 100x is:", ChlRaw_100x, "+-", ChlRaw_SD_100x, "| Cal:", ChlCal_100x, "+-", ChlCal_SD_100x)
+        # Print results (MOVED TO main.py)
+        # print("Chl 1x is:", ChlRaw_1x, "+-", ChlRaw_SD_1x, "| Cal:", ChlCal_1x, "+-", ChlCal_SD_1x)
+        # print("Chl 10x is:", ChlRaw_10x, "+-", ChlRaw_SD_10x, "| Cal:", ChlCal_10x, "+-", ChlCal_SD_10x)
+        # print("Chl 100x is:", ChlRaw_100x, "+-", ChlRaw_SD_100x, "| Cal:", ChlCal_100x, "+-", ChlCal_SD_100x)
 
         # Turn off probe
         wiringpi.digitalWrite(chlpin, 1)

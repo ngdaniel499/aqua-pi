@@ -124,17 +124,17 @@ try:
         #print('CondCal', CondCal)
         #print('SpCond', SpCond)
         #print('Salinity', Salinity)
-        print('ChlGain', ChlGain)
-        print('ChlRaw', ChlRaw, '+-', ChlRaw_Range)
-        print('ChlVolts', ChlVolts, '+-', ChlVolts_Range)
-        print('ChlCal', ChlCal, '+-', ChlCal_Range)
+        print("Chl 1x is:", ChlRaw_1x, "+-", ChlRaw_SD_1x, "| Cal:", ChlCal_1x, "+-", ChlCal_SD_1x)
+        print("Chl 10x is:", ChlRaw_10x, "+-", ChlRaw_SD_10x, "| Cal:", ChlCal_10x, "+-", ChlCal_SD_10x)
+        print("Chl 100x is:", ChlRaw_100x, "+-", ChlRaw_SD_100x, "| Cal:", ChlCal_100x, "+-", ChlCal_SD_100x)
+
         # print('CDOMRaw', CDOMRaw)
         # print('CDOMVolts', CDOMVolts)
         # print('CDOMCal', CDOMCal)
         #print('CDOM Chl EQ', CDOMChlEQ)
         #print('Chl Adjusted', ChlAdj)
-        print('Tempraw', TempRaw)
-        print('TempCal', TempCal, '+-', TempCal_Range)
+        print('Tempraw', TempRaw, '+-', TempRaw_SD)
+        print('TempCal', TempCal, '+-', TempCal_SD)
         sys.stdout.flush()
 
         # Write results to file
