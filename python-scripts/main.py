@@ -42,7 +42,7 @@ def open_outputfile(fpath, stationid):
         f = open(fpathf, 'a')
     else:
         f = open(fpathf, 'w')
-        headerline = 'Time,ChlGain,ChlRaw,ChlRawRangeCI,ChlVolts,ChlVoltsRangeCI,ChlCal,ChlCalRangeCI,CDOMRaw,CDOMVolts,CDOMCal,TempRaw,TempCal,TempCalRangeCI'
+        headerline = 'Time,ChlRaw_1x,ChlRawSD_1x,ChlCal_1x,ChlCalSD_1x,ChlRaw_10x,ChlRawSD_10x,ChlCal_10x,ChlCalSD_10x,ChlRaw_100x,ChlRawSD_100x,ChlCal_100x,ChlCalSD_100x,TempRaw,TempRawSD,TempCal,TempCalSD'
         f.write(str(headerline))
         f.write('\n')
     return f, outfile, fpathf
